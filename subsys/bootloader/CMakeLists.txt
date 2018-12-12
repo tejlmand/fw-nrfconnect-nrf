@@ -8,42 +8,45 @@
 # This is because our library should not be added to the 'ZEPHYR_LIBS' list,
 # since it should not be linked to the zephyr elf itself.
 
-add_library(bootloader bootloader.c)
+# Bump IMAGE number, allowing us to create a bootloader using app lib.
+zephyr_add_multi_image(1)
 
-target_link_libraries(bootloader PRIVATE bl_crypto)
+target_sources(${IMAGE}app bootloader.c)
+
+target_link_libraries(${IMAGE}app PRIVATE bl_crypto)
 
 add_subdirectory(c_runtime_setup)
-target_link_libraries(bootloader PRIVATE c_runtime_setup)
+target_link_libraries(${IMAGE}app PRIVATE c_runtime_setup)
 
 add_subdirectory(provision)
-target_link_libraries(bootloader PRIVATE provision)
+target_link_libraries(${IMAGE}app PRIVATE provision)
 
 if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR OR CONFIG_SECURE_BOOT_DEBUG)
   add_subdirectory(libc)
-  target_link_libraries(bootloader PRIVATE libc)
+  target_link_libraries(${IMAGE}app PRIVATE libc)
 endif()
 
 add_subdirectory(debug)
-target_link_libraries(bootloader PRIVATE debuglib)
+target_link_libraries(${IMAGE}app PRIVATE debuglib)
 
 add_subdirectory_ifdef(CONFIG_SB_FLASH_PROTECT fprotect)
-target_link_libraries_ifdef(CONFIG_SB_FLASH_PROTECT bootloader PRIVATE fprotect)
+target_link_libraries_ifdef(CONFIG_SB_FLASH_PROTECT ${IMAGE}app PRIVATE fprotect)
 
 add_subdirectory(fw_metadata)
-target_link_libraries(bootloader PRIVATE fw_metadata)
+target_link_libraries(${IMAGE}app PRIVATE fw_metadata)
 
 
-add_dependencies(bootloader offsets_h)
-target_link_libraries(bootloader PRIVATE zephyr_interface)
+add_dependencies(${IMAGE}app offsets_h)
+target_link_libraries(${IMAGE}app PRIVATE zephyr_interface)
 
 target_include_directories(
-  bootloader
+  ${IMAGE}app
   PRIVATE
   include
   )
 
 target_include_directories_ifdef(CONFIG_SECURE_BOOT_DEBUG
-  bootloader
+  ${IMAGE}app
   PRIVATE
   include/debug
   )
@@ -61,7 +64,7 @@ set(bl_zephyr_lnk
   # Even those that are not used anywhere.
   # Acheive this by using the '--whole-archive' flag.
   ${LINKERFLAGPREFIX},--whole-archive
-  bootloader # include bootloader library
+  ${IMAGE}app # include bootloader library
   ${LINKERFLAGPREFIX},--no-whole-archive
   ${OFFSETS_O_PATH}
   ${LIB_INCLUDE_DIR}
