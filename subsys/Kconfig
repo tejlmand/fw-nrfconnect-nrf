@@ -5,7 +5,7 @@
 #
 
 
-rsource "bootloader/Kconfig"
+rsource "bootloader/Kconfig.bootloader"
 
 rsource "bluetooth/Kconfig"
 

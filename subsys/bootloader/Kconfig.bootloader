@@ -4,13 +4,18 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-menuconfig SECURE_BOOT
-	bool "Secure Boot"
+config SECURE_BOOT
+# TODO boot - bootloader - really?
+	bool "Use Secure Boot"
+	depends on !IS_SECURE_BOOTLOADER
+
+menuconfig IS_SECURE_BOOTLOADER
+	bool "Current app is bootloader"
 	select SECURE_BOOT_CRYPTO
 	select SB_FLASH_PROTECT
-	select NO_KERNEL
+	depends on !KERNEL
 
-if SECURE_BOOT
+if IS_SECURE_BOOTLOADER
 
 config CUSTOM_DTS_OVERLAY_CMAKE_FILE
 	string
@@ -57,8 +62,8 @@ rsource "fw_metadata/Kconfig"
 
 rsource "fprotect/Kconfig"
 
-endif # SECURE_BOOT
+endif # IS_SECURE_BOOTLOADER
 
-if ZTEST && !SECURE_BOOT
+if ZTEST && !IS_SECURE_BOOTLOADER
 rsource "bl_crypto/Kconfig"
 endif # ZTEST
