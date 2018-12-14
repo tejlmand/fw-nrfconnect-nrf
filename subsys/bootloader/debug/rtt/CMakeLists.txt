@@ -13,7 +13,7 @@ add_library(segger_rtt STATIC
 )
 
 target_link_libraries(segger_rtt PRIVATE libc)
-target_link_libraries(segger_rtt PRIVATE zephyr_interface)
+target_link_libraries(segger_rtt PRIVATE ${IMAGE}zephyr_interface)
 
 target_include_directories(segger_rtt PUBLIC ../../include/debug)
 target_include_directories(segger_rtt PUBLIC ${SEGGER}/rtt)

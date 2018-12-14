@@ -4,18 +4,26 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-include(${NRF_DIR}/subsys/bootloader/cmake/fw_metadata.cmake)
+# This file creates variables with the magic numbers used for firmware metadata
+# as comma-separated lists of numbers.
 
-target_compile_definitions(${IMAGE}zephyr_interface
-  INTERFACE
+math(EXPR
+  MAGIC_COMPATIBILITY
+  "(${CONFIG_SB_INFO_VERSION}) |
+   (${CONFIG_SB_HARDWARE_ID} << 8) |
+   (${CONFIG_SB_CRYPTO_ALGORITHM} << 16) |
+   (${CONFIG_SB_CUSTOM_COMPATIBILITY_ID} << 24)"
+  )
+
+set(FIRMWARE_INFO_MAGIC   "${CONFIG_SB_MAGIC_COMMON},${CONFIG_SB_MAGIC_FIRMWARE_INFO},${MAGIC_COMPATIBILITY}")
+set(POINTER_MAGIC         "${CONFIG_SB_MAGIC_COMMON},${CONFIG_SB_MAGIC_POINTER},${MAGIC_COMPATIBILITY}")
+set(VALIDATION_INFO_MAGIC "${CONFIG_SB_MAGIC_COMMON},${CONFIG_SB_MAGIC_VALIDATION_INFO},${MAGIC_COMPATIBILITY}")
+
+zephyr_compile_definitions(
   FIRMWARE_INFO_MAGIC=${FIRMWARE_INFO_MAGIC}
   POINTER_MAGIC=${POINTER_MAGIC}
   VALIDATION_INFO_MAGIC=${VALIDATION_INFO_MAGIC}
   )
 
-add_library(fw_metadata fw_metadata.c)
-target_include_directories(fw_metadata PUBLIC ../include)
-target_link_libraries(fw_metadata PRIVATE ${IMAGE}zephyr_interface)
-
-zephyr_sources(fw_metadata.c)
-zephyr_include_directories(../include)
+zephyr_library()
+zephyr_library_sources(fw_metadata.c)
