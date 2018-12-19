@@ -4,12 +4,12 @@ nRF9160: Secure Boot
 ####################
 
 The Secure Boot sample application provides a reference implementation of a first-stage boot firmware.
-This firmware is required to set up the nRF9160 Development Kit so that it can run user applications in the non-secure domain.
+This firmware is required to set up the nRF9160 DK so that it can run user applications in the non-secure domain.
 
 Overview
 ********
 
-The sample configures secure attributions for the nRF9160 SoC and jumps into the non-secure application.
+The sample configures secure attributions for the nRF9160 SiP and jumps into the non-secure application.
 
 It utilizes the SPU peripheral to configure security attributions for the nRF9160 flash, SRAM, and peripherals.
 After the configuration setup is complete, the sample loads the application firmware that is located on the device.
@@ -53,7 +53,7 @@ Requirements
 
 The following development board:
 
-* nRF9160 Preview Development Kit board (PCA10090)
+* nRF9160 DK board (PCA10090)
 
 Building and running
 ********************
@@ -62,6 +62,8 @@ This sample can be found under :file:`samples/nrf9160/secure_boot` in the |NCS| 
 
 The sample is built as a secure firmware image, thus with ``CONFIG_TRUSTED_EXECUTION_SECURE=y`` set in ``prj.conf``.
 It can be programmed independently from the non-secure application firmware.
+
+See :ref:`gs_programming` for information about how to build and program the application.
 
 Testing
 =======

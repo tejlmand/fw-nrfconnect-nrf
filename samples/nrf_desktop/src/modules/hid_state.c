@@ -20,7 +20,6 @@
 #include "button_event.h"
 #include "motion_event.h"
 #include "wheel_event.h"
-#include "power_event.h"
 #include "hid_event.h"
 #include "ble_event.h"
 #include "usb_event.h"
@@ -355,7 +354,7 @@ static struct subscriber *get_subscriber(const void *subscriber_id)
 			return &state.subscriber[i];
 		}
 	}
-	LOG_WRN("no subscriber %p\n", subscriber_id);
+	LOG_WRN("No subscriber %p", subscriber_id);
 	return NULL;
 }
 
@@ -367,7 +366,7 @@ static struct subscriber *get_subscriber_by_type(bool is_usb)
 			return &state.subscriber[i];
 		}
 	}
-	LOG_WRN("no subscriber of type %s\n", (is_usb)?("USB"):("BLE"));
+	LOG_WRN("No subscriber of type %s", (is_usb)?("USB"):("BLE"));
 	return NULL;
 }
 
@@ -377,7 +376,7 @@ static void connect_subscriber(const void *subscriber_id, bool is_usb)
 		if (!state.subscriber[i].id) {
 			state.subscriber[i].id = subscriber_id;
 			state.subscriber[i].is_usb = is_usb;
-			LOG_INF("subscriber %p connected", subscriber_id);
+			LOG_INF("Subscriber %p connected", subscriber_id);
 
 			if (!state.selected || is_usb) {
 				state.selected = &state.subscriber[i];
@@ -387,38 +386,54 @@ static void connect_subscriber(const void *subscriber_id, bool is_usb)
 			return;
 		}
 	}
-	LOG_WRN("cannot connect subscriber");
+	LOG_WRN("Cannot connect subscriber");
 }
 
 static void disconnect_subscriber(const void *subscriber_id)
 {
+	struct subscriber *s = NULL;
+
 	for (size_t i = 0; i < ARRAY_SIZE(state.subscriber); i++) {
 		if (subscriber_id == state.subscriber[i].id) {
-			bool is_usb = state.subscriber[i].is_usb;
-
-			memset(&state.subscriber[i],
-			       0,
-			       sizeof(state.subscriber[i]));
-			LOG_INF("subscriber %p disconnected", subscriber_id);
-
-			if (&state.subscriber[i] == state.selected) {
-				state.selected = NULL;
-				if (is_usb) {
-					state.selected =
-						get_subscriber_by_type(false);
-				}
-
-				if (!state.selected) {
-					LOG_INF("no active subscriber");
-				} else {
-					LOG_INF("Active subscriber %p",
-						state.selected->id);
-				}
-			}
-			return;
+			s = &state.subscriber[i];
+			break;
 		}
 	}
-	LOG_WRN("cannot disconnect subscriber");
+
+	if (s == NULL) {
+		LOG_WRN("Cannot disconnect subscriber");
+		return;
+	}
+
+	if (s == state.selected) {
+		enum target_report tr = TARGET_REPORT_MOUSE;
+		struct report_state *rs = &s->state[tr];
+
+		if (rs->state != STATE_DISCONNECTED) {
+			/* Clear state if notification was not
+			 * disabled before disconnection.
+			 */
+			struct report_data *rd = &state.report_data[tr];
+
+			LOG_INF("Clear mouse report data");
+			memset(&rd->items, 0, sizeof(rd->items));
+			eventq_reset(&rd->eventq);
+		}
+	}
+
+	memset(s, 0, sizeof(*s));
+
+	LOG_INF("Subscriber %p disconnected", subscriber_id);
+
+	if (s == state.selected) {
+		state.selected = get_subscriber_by_type(false);
+
+		if (!state.selected) {
+			LOG_INF("No active subscriber");
+		} else {
+			LOG_INF("Active subscriber %p", state.selected->id);
+		}
+	}
 }
 
 static bool key_value_set(struct items *items, u16_t usage_id, s16_t value)
@@ -626,25 +641,35 @@ static void report_issued(const void *subscriber_id, enum target_report tr,
 	struct subscriber *subscriber = get_subscriber(subscriber_id);
 
 	if (!subscriber) {
-		LOG_WRN("no subscriber %p", subscriber_id);
-		return;
-	}
-
-	if (state.selected != subscriber) {
-		LOG_INF("subscriber %p not active", subscriber_id);
+		LOG_WRN("No subscriber %p", subscriber_id);
 		return;
 	}
 
 	struct report_state *rs = &subscriber->state[tr];
-	struct report_data *rd = &state.report_data[tr];
 
 	__ASSERT_NO_MSG(rs->cnt > 0);
 	rs->cnt--;
 
+	if (state.selected != subscriber) {
+		LOG_INF("Subscriber %p not active", subscriber_id);
+		if (rs->cnt == 0) {
+			rs->state = STATE_CONNECTED_IDLE;
+		}
+		return;
+	}
+
+	struct report_data *rd = &state.report_data[tr];
+
 	if (error) {
 		rs->err_cnt++;
 		if (rs->err_cnt > 1) {
+			/* To maintain the sanity of HID state, clear
+			 * all recorded events and items.
+			 */
 			LOG_ERR("Error while sending report");
+			memset(&rd->items, 0, sizeof(rd->items));
+			eventq_reset(&rd->eventq);
+
 			if (rs->cnt == 0) {
 				rs->state = STATE_CONNECTED_IDLE;
 			}
@@ -702,7 +727,7 @@ static void connect(const void *subscriber_id, enum target_report tr)
 	struct subscriber *subscriber = get_subscriber(subscriber_id);
 
 	if (!subscriber) {
-		LOG_WRN("no subscriber %p", subscriber_id);
+		LOG_WRN("No subscriber %p", subscriber_id);
 		return;
 	}
 
@@ -738,18 +763,17 @@ static void disconnect(const void *subscriber_id, enum target_report tr)
 	struct subscriber *subscriber = get_subscriber(subscriber_id);
 
 	if (!subscriber) {
-		LOG_WRN("no subscriber %p", subscriber_id);
+		LOG_WRN("No subscriber %p", subscriber_id);
 		return;
 	}
 
 	subscriber->state[tr].state = STATE_DISCONNECTED;
-}
 
-static void keep_device_active(void)
-{
-	struct keep_active_event *event = new_keep_active_event();
-	event->module_name = MODULE_NAME;
-	EVENT_SUBMIT(event);
+	struct report_data *rd = &state.report_data[tr];
+
+	LOG_INF("Clear report data (%d)", tr);
+	memset(&rd->items, 0, sizeof(rd->items));
+	eventq_reset(&rd->eventq);
 }
 
 /**@brief Enqueue event that updates a given usage. */
@@ -847,8 +871,6 @@ static bool event_handler(const struct event_header *eh)
 
 		report_send(TARGET_REPORT_MOUSE, true);
 
-		keep_device_active();
-
 		return false;
 	}
 
@@ -869,8 +891,6 @@ static bool event_handler(const struct event_header *eh)
 
 		report_send(TARGET_REPORT_MOUSE, true);
 
-		keep_device_active();
-
 		return false;
 	}
 
@@ -889,8 +909,6 @@ static bool event_handler(const struct event_header *eh)
 			/* Keydown increases ref counter, keyup decreases it. */
 			s16_t value = (event->pressed != false) ? (1) : (-1);
 			update_key(map, value);
-
-			keep_device_active();
 
 			return false;
 		}
