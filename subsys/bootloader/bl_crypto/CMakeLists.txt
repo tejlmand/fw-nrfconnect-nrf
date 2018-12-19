@@ -5,6 +5,7 @@
 #
 
 zephyr_library()
+zephyr_library_sources(bl_crypto.c)
 zephyr_library_link_libraries(nrfxlib_crypto)
 zephyr_library_link_libraries_ifdef(CONFIG_SECURE_BOOT_DEBUG debuglib)
 

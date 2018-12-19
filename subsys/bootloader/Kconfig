@@ -9,20 +9,7 @@ config SECURE_BOOT
 	bool "Use Secure Boot"
 	depends on !IS_SECURE_BOOTLOADER
 
-menuconfig IS_SECURE_BOOTLOADER
-	bool "Current app is bootloader"
-	select SECURE_BOOT_CRYPTO
-	select SB_FLASH_PROTECT
-	depends on !KERNEL
-
-if IS_SECURE_BOOTLOADER
-
-config CUSTOM_DTS_OVERLAY_CMAKE_FILE
-	string
-	# We must use relative path from ZEPHYR_BASE here as the NRF_DIR
-	# variable is not yet available when this config is used.
-	default "${ZEPHYR_BASE}/../nrf/subsys/bootloader/dts/overlay.cmake"
-
+if SECURE_BOOT
 
 config SB_SIGNING_KEY_FILE
 	string "Private key PEM file"
@@ -52,13 +39,23 @@ config SB_PUBLIC_KEY_FILES
 	  will be used.
 	  Example value: ~/keys/pk1.pem,~/keys/pk2.pem,~/keys/pk3.pem
 
+rsource "fw_metadata/Kconfig"
+
+endif # SECURE_BOOT
+
+menuconfig IS_SECURE_BOOTLOADER
+	bool "Current app is bootloader"
+	select SECURE_BOOT_CRYPTO
+	select SB_FLASH_PROTECT
+	depends on !KERNEL
+
+if IS_SECURE_BOOTLOADER
+
 rsource "debug/Kconfig"
 
 rsource "bl_crypto/Kconfig"
 
 rsource "c_runtime_setup/Kconfig"
-
-rsource "fw_metadata/Kconfig"
 
 rsource "fprotect/Kconfig"
 

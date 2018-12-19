@@ -10,7 +10,6 @@ set(EXTS ${ZEPHYR_BASE}/ext)
 set(HAL ${EXTS}/hal)
 
 zephyr_library()
-print(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_CUSTOM)
 
 if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_CUSTOM)
   zephyr_library_sources(startup.c)
@@ -34,16 +33,10 @@ endif()
 
 # Nordic specific for startup code
 if(CONFIG_SOC_SERIES_NRF91X)
-  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-    ${HAL}/nordic/nrfx/mdk/system_nrf9160.c
-    )
   zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
     gcc_startup_nrf9160.S
     )
 elseif(CONFIG_SOC_SERIES_NRF52X)
-  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-    ${HAL}/nordic/nrfx/mdk/system_nrf52840.c
-    )
   zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
     gcc_startup_nrf52840.S
     )

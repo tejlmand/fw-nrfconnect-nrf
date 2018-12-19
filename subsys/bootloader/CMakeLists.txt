@@ -8,77 +8,11 @@ endif()
 
 add_subdirectory(c_runtime_setup)
 add_subdirectory(provision)
-add_subdirectory(fw_metadata)
 
 zephyr_include_directories(include)
 
-set(NRF_BOOTLOADER_SCRIPTS ${NRF_DIR}/scripts/bootloader)
-
-set(BOOTLOADER_HEX_NAME    bootloader.hex)
-set(PROVISION_HEX_NAME     provision_data.hex)
-set(SIGNED_KERNEL_HEX_NAME signed_${KERNEL_HEX_NAME})
-
-set(BOOTLOADER_HEX         ${PROJECT_BINARY_DIR}/zephyr.hex)
-print(BOOTLOADER_HEX)
-set(PROVISION_HEX          ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME})
-set(SIGNED_KERNEL_HEX      ${PROJECT_BINARY_DIR}/${SIGNED_KERNEL_HEX_NAME})
-
-set(KERNEL_HEX             ${PROJECT_BINARY_DIR}/${KERNEL_HEX_NAME})
-
-# Append all hex files to merge to list.
-list(APPEND to_merge ${BOOTLOADER_HEX})
-list(APPEND to_merge ${SIGNED_KERNEL_HEX})
-list(APPEND to_merge ${PROVISION_HEX})
-# TODO Add merging of hex files
-# set_property(GLOBAL APPEND PROPERTY HEX_FILES_TO_MERGE ${to_merge})
-
-include (${CMAKE_CURRENT_LIST_DIR}/cmake/debug_keys.cmake)
-
-add_custom_command(
-  OUTPUT
-  ${SIGNED_KERNEL_HEX}
-  COMMAND
-  ${PYTHON_EXECUTABLE}
-  ${NRF_BOOTLOADER_SCRIPTS}/sign.py
-  --input ${PROJECT_BINARY_DIR}/${KERNEL_HEX_NAME}
-  --output ${SIGNED_KERNEL_HEX}
-  --offset ${CONFIG_SB_VALIDATION_METADATA_OFFSET}
-  --pem ${signature_private_key_file}
-  --magic-value "${VALIDATION_INFO_MAGIC}"
-  --pk-hash-len ${CONFIG_SB_PUBLIC_KEY_HASH_LEN}
-  DEPENDS kernel_elf ${key_file_depends}
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  COMMENT
-  "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX_NAME}"
-  USES_TERMINAL
+set_property(
+  GLOBAL APPEND PROPERTY
+  HEX_FILES_TO_MERGE
+  ${PROJECT_BINARY_DIR}/zephyr.hex
   )
-add_custom_target(
-  sign_target
-  DEPENDS
-  ${PROJECT_BINARY_DIR}/${SIGNED_KERNEL_HEX_NAME}
-  offsets_h
-  )
-
-add_custom_command(
-  OUTPUT
-  ${PROVISION_HEX}
-  COMMAND
-  ${PYTHON_EXECUTABLE}
-  ${NRF_BOOTLOADER_SCRIPTS}/provision.py
-  --generated-conf-file ${PROJECT_BINARY_DIR}/include/generated/generated_dts_board.conf
-  --signature-private-key-file "${signature_private_key_file}"
-  --public-key-files "${public_key_files}"
-  --output ${PROVISION_HEX}
-  DEPENDS ${provision_depends}
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-  COMMENT
-  "Creating provision data for Bootloader, storing to ${PROVISION_HEX_NAME}"
-  USES_TERMINAL
-  )
-add_custom_target(
-  provision_target
-  DEPENDS
-  ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME}
-  offsets_h
-  )
-

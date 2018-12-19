@@ -140,9 +140,9 @@ static void boot_from(u32_t *address)
 }
 
 #if CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR
-void _Cstart(void) __attribute__((alias("main_bl")));
+void _Cstart(void) __attribute__((alias("__start")));
 #endif
-void main_bl(void)
+void __start(void)
 {
 #if CONFIG_SB_FLASH_PROTECT
 	fprotect_area(FLASH_AREA_SECURE_BOOT_OFFSET,
