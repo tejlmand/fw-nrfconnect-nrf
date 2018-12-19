@@ -20,7 +20,6 @@ elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
     ${CORTEX_M}/reset.S
     ${ARM}/irq_init.c
     ${CORTEX_M}/vector_table.S
-    zephyr_kernel_init_cpy.c
     zephyr_dummy_interrupt_handlers.c
     )
 elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK)
@@ -29,6 +28,14 @@ elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK)
   add_definitions(-D__STARTUP_CLEAR_BSS)
 else()
   assert(0 "Unreachable code")
+endif()
+
+if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
+  add_library(kernel_init STATIC ${ZEPHYR_BASE}/kernel/init.c)
+  target_link_libraries(kernel_init zephyr_interface)
+  target_compile_definitions(kernel_init PRIVATE _Cstart=UNUSED_Cstart)
+  add_dependencies(kernel_init offsets_h)
+  target_link_libraries(c_runtime_setup PRIVATE kernel_init)
 endif()
 
 # Nordic specific for startup code
