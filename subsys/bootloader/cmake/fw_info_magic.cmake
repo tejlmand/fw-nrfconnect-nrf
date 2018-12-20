@@ -1,7 +1,6 @@
 # This file creates variables with the magic numbers used for firmware metadata
 # as comma-separated lists of numbers.
 
-print(CONFIG_SB_CRYPTO_ALGORITHM)
 math(EXPR
   MAGIC_COMPATIBILITY
   "(${CONFIG_SB_INFO_VERSION}) |
