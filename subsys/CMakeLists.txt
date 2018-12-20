@@ -8,7 +8,11 @@ if (CONFIG_BT OR CONFIG_BT_LL_NRFXLIB)
   add_subdirectory(bluetooth)
 endif()
 
+zephyr_add_multi_image()
 add_subdirectory_ifdef(CONFIG_SECURE_BOOT bootloader/app)
+# multi_image_end
+
+add_subdirectory_ifdef(CONFIG_SECURE_BOOT bootloader/app_sys)
 add_subdirectory_ifdef(CONFIG_IS_SECURE_BOOTLOADER bootloader)
 
 add_subdirectory(net)
