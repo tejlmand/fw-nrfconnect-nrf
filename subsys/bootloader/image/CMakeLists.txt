@@ -11,7 +11,15 @@ set_property(
   ${SIGNED_KERNEL_HEX_NAME}
   ${PROVISION_HEX}
 )
+set_property(
+  GLOBAL APPEND PROPERTY
+  HEX_FILES_TO_MERGE_TARGET
+  sign_target
+  provision_target
+)
 
+# TODO add support for multiple linker passes
+set(kernel_elf ${IMAGE}kernel_elf)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/debug_keys.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/fw_info_magic.cmake)
 
@@ -27,7 +35,7 @@ add_custom_command(
   --pem ${signature_private_key_file}
   --magic-value "${VALIDATION_INFO_MAGIC}"
   --pk-hash-len ${CONFIG_SB_PUBLIC_KEY_HASH_LEN}
-  DEPENDS kernel_elf ${key_file_depends}
+  DEPENDS ${kernel_elf} ${key_file_depends}
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
   "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX_NAME}"
@@ -37,7 +45,6 @@ add_custom_target(
   sign_target
   DEPENDS
   ${PROJECT_BINARY_DIR}/${SIGNED_KERNEL_HEX_NAME}
-  offsets_h
   )
 
 add_custom_command(
@@ -60,6 +67,5 @@ add_custom_target(
   provision_target
   DEPENDS
   ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME}
-  offsets_h
   )
 

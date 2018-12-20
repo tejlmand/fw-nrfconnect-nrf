@@ -27,7 +27,7 @@ add_custom_command(
   COMMAND
   ${cmd}
   --output-public ${DEBUG_PUBLIC_KEY_1}
-  DEPENDS kernel_elf
+  DEPENDS ${kernel_elf}
   WORKING_DIRECTORY ${APPLICATION_BINARY_DIR}
   COMMENT
   "Generating debug key files."
