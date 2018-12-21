@@ -9,6 +9,10 @@
 extern const u32_t _image_rom_start;
 extern const u32_t _flash_used;
 
+#ifndef FIRMWARE_INFO_MAGIC
+#error "Missing FIRMWARE_INFO_MAGIC"
+#endif
+
 const struct fw_firmware_info m_firmware_info
 __attribute__((section(".firmware_info")))
 __attribute__((used)) = {

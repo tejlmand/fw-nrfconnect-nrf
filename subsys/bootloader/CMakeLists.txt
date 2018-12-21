@@ -1,4 +1,3 @@
-add_subdirectory(fw_metadata)
 add_subdirectory(c_runtime_setup)
 add_subdirectory(provision)
 

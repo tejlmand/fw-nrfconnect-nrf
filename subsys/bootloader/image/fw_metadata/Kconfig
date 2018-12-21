@@ -44,14 +44,14 @@ config SB_MAGIC_COMMON
 
 config SB_MAGIC_FIRMWARE_INFO
 	hex "Magic word for firmware info structs (32 bits)."
-	default 0x8fcebb4c
+	default 0xBBBBBBBB
 	help
 	  Magic word value specific to firmware info structs (inside firmware).
 	  For more info, see SB_MAGIC_COMMON.
 
 config SB_MAGIC_VALIDATION_INFO
 	hex "Magic word used for validation info structs (32 bits)."
-	default 0x86518483
+	default 0xAAAAAAAA
 	help
 	  Magic word value specific to validation info structs (after firmware).
 	  For more info, see SB_MAGIC_COMMON.

@@ -1,3 +1,5 @@
+zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/../include)
+add_subdirectory(fw_metadata)
 set(NRF_BOOTLOADER_SCRIPTS ${NRF_DIR}/scripts/bootloader)
 
 set(PROVISION_HEX_NAME     provision_data.hex)
