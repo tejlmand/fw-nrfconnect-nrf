@@ -45,7 +45,7 @@ static int _crypto_root_of_trust(const u8_t *pk, const u8_t *pk_hash,
 		return -EPKHASHINV;
 	}
 
-	if (!verify_sig(fw, fw_len, sig, pk, external)) {
+	if (!_verify_sig(fw, fw_len, sig, pk, external)) {
 		return -ESIGINV;
 	}
 	return 0;
@@ -59,6 +59,11 @@ int crypto_root_of_trust(const u8_t *pk, const u8_t *pk_hash,
 	return _crypto_root_of_trust(pk, pk_hash, sig, fw, fw_len, false);
 }
 
+int test_print(int i)
+{
+	return i;
+}
+
 
 int crypto_root_of_trust_external(const u8_t *pk, const u8_t *pk_hash,
 				  const u8_t *sig, const u8_t *fw,
@@ -67,8 +72,13 @@ int crypto_root_of_trust_external(const u8_t *pk, const u8_t *pk_hash,
 	return _crypto_root_of_trust(pk, pk_hash, sig, fw, fw_len, true);
 }
 
+bool verify_sig_external(const u8_t *data, u32_t data_len, const u8_t *sig,
+		const u8_t *pk)
+{
+	return _verify_sig(data, data_len, sig, pk, true);
+}
 
-const struct bl_crypto_abi bl_crypto_abi
+const struct bl_crypto_abi crypto_root_of_trust_abi 
 _GENERIC_SECTION(.extabis)
 __attribute__((used)) = {
 	.header = {
@@ -80,5 +90,8 @@ __attribute__((used)) = {
 	},
 	.abi = {
 		.crypto_root_of_trust = crypto_root_of_trust_external,
+		.verify_sig = verify_sig_external,
+		.test_print = test_print,
 	},
 };
+

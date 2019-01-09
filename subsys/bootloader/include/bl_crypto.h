@@ -51,10 +51,15 @@ TYPE_AND_DECL(int, crypto_root_of_trust, const u8_t *pk,
 					 const u8_t *fw,
 					 const u32_t fw_len);
 
+TYPE_AND_DECL(int, test_print, int i); 
+TYPE_AND_DECL(bool, verify_sig, const u8_t * data, u32_t data_len, const u8_t * sig, const u8_t * pk); 
+
 struct bl_crypto_abi {
 	struct fw_abi_info header;
 	struct {
 		crypto_root_of_trust_t crypto_root_of_trust;
+		verify_sig_t verify_sig; 
+		test_print_t test_print;
 	} abi;
 };
 

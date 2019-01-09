@@ -42,7 +42,7 @@ bool verify_truncated_hash(const u8_t *data, u32_t data_len,
  * @param[in] sig      Expected signature
  * @param[in] pk       Public Key
  */
-bool verify_sig(const u8_t *data, u32_t data_len,
+bool _verify_sig(const u8_t *data, u32_t data_len,
 		const u8_t *sig, const u8_t *pk, bool external);
 
 #endif

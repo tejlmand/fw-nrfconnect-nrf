@@ -9,20 +9,29 @@
 #include "bl_crypto.h"
 #include "test_vector.c"
 
+void test_verify_signature(void)
+{
+	bool retval = verify_sig(firmware_hash, data_len, sig, pk);
+	zassert_equal(true, retval, "retval was: %d", retval);
+}
+
 
 void test_crypto_root_of_trust(void)
 {
+
 	/* Success. */
 	int retval = crypto_root_of_trust(pk, pk_hash, sig, firmware,
 			sizeof(firmware));
 
 	zassert_equal(0, retval, "retval was %d", retval);
+	test_print(23);
 
 	/* pk doesn't match pk_hash. */
 	pk[1]++;
 	retval = crypto_root_of_trust(pk, pk_hash, sig, firmware,
 			sizeof(firmware));
 	pk[1]--;
+	test_print(26);
 
 	zassert_equal(-EPKHASHINV, retval, "retval was %d", retval);
 
@@ -32,12 +41,16 @@ void test_crypto_root_of_trust(void)
 			sizeof(firmware));
 	firmware[0]--;
 
+	test_print(42);
+
 	zassert_equal(-ESIGINV, retval, "retval was %d", retval);
 }
 
 void test_main(void)
 {
 	ztest_test_suite(test_bl_crypto,
-			 ztest_unit_test(test_crypto_root_of_trust));
+			 ztest_unit_test(test_crypto_root_of_trust),
+			 ztest_unit_test(test_verify_signature)
+	);
 	ztest_run_test_suite(test_bl_crypto);
 }
