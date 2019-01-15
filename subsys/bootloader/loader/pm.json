@@ -1,0 +1,6 @@
+#include "autoconf.h"
+{
+        "b0":{
+                "address":"0x0"
+        }
+}
