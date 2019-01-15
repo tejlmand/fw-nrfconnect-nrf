@@ -22,20 +22,13 @@ elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
     ${CORTEX_M}/vector_table.S
     zephyr_dummy_interrupt_handlers.c
     )
+   zephyr_library_link_libraries(${IMAGE}kernel_init)
 elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK)
   # Set start symbol of MDK to point to the main_bl function
   add_definitions(-D__START=main_bl)
   add_definitions(-D__STARTUP_CLEAR_BSS)
 else()
   assert(0 "Unreachable code")
-endif()
-
-if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
-  add_library(kernel_init STATIC ${ZEPHYR_BASE}/kernel/init.c)
-  target_link_libraries(kernel_init zephyr_interface)
-  target_compile_definitions(kernel_init PRIVATE _Cstart=UNUSED_Cstart)
-  add_dependencies(kernel_init offsets_h)
-  target_link_libraries(c_runtime_setup PRIVATE kernel_init)
 endif()
 
 # Nordic specific for startup code
@@ -47,4 +40,11 @@ elseif(CONFIG_SOC_SERIES_NRF52X)
   zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
     gcc_startup_nrf52840.S
     )
+endif()
+
+if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
+  zephyr_library_named(kernel_init)
+  zephyr_library_sources(${ZEPHYR_BASE}/kernel/init.c)
+  zephyr_library_compile_definitions(_Cstart=UNUSED_Cstart)
+  add_dependencies(${IMAGE}kernel_init ${IMAGE}offsets_h)
 endif()
