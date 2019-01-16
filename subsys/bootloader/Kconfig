@@ -50,6 +50,15 @@ menuconfig IS_SECURE_BOOTLOADER
 
 if IS_SECURE_BOOTLOADER
 
+config PARTITION_MANAGER_RESERVED_SPACE_B0
+	hex "Flash space reserved for bootloader."
+	default 0x8000 if SOC_NRF9160
+	default 0x4000
+	help
+	  Flash space set aside for the secure bootloader. Note, the name
+	  of this configuration needs to match the requirements set by the
+	  script 'partition_manager.py'. See pm.yaml.
+
 rsource "debug/Kconfig"
 
 rsource "c_runtime_setup/Kconfig"

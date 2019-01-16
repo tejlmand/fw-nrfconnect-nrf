@@ -1,2 +1,2 @@
 b0:
-  address: 0x0
+  placement: {before: [mcuboot, app]}
