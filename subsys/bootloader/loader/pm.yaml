@@ -1,0 +1,2 @@
+b0:
+  placement: {before: [mcuboot, app]}
