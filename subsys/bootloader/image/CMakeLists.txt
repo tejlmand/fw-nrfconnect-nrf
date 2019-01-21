@@ -1,16 +1,18 @@
 zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/../include)
 add_subdirectory(fw_metadata)
 set(NRF_BOOTLOADER_SCRIPTS ${NRF_DIR}/scripts/bootloader)
-
+print(CMAKE_BINARY_DIR)
 set(PROVISION_HEX_NAME     provision_data.hex)
-set(SIGNED_KERNEL_HEX_NAME ${PROJECT_BINARY_DIR}/signed_${KERNEL_HEX_NAME})
 set(PROVISION_HEX          ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME})
-set(SIGNED_KERNEL_HEX      ${PROJECT_BINARY_DIR}/${SIGNED_KERNEL_HEX_NAME})
+set(SIGNED_KERNEL_HEX      ${CMAKE_BINARY_DIR}/signed_${KERNEL_HEX_NAME})
 
+message("ADDING")
+print(SIGNED_KERNEL_HEX)
+print(PROVISION_HEX)
 set_property(
   GLOBAL APPEND PROPERTY
   HEX_FILES_TO_MERGE
-  ${SIGNED_KERNEL_HEX_NAME}
+  ${SIGNED_KERNEL_HEX}
   ${PROVISION_HEX}
 )
 set_property(
@@ -25,6 +27,7 @@ set(kernel_elf ${IMAGE}kernel_elf)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/debug_keys.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/fw_info_magic.cmake)
 
+print(PROJECT_BINARY_DIR)
 add_custom_command(
   OUTPUT
   ${SIGNED_KERNEL_HEX}
@@ -40,22 +43,23 @@ add_custom_command(
   DEPENDS ${kernel_elf} ${key_file_depends}
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
-  "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX_NAME}"
+  "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX}"
   USES_TERMINAL
   )
 add_custom_target(
   sign_target
   DEPENDS
-  ${PROJECT_BINARY_DIR}/${SIGNED_KERNEL_HEX_NAME}
+  ${SIGNED_KERNEL_HEX}
   )
 
+file(GLOB_RECURSE autoconf_files "${PROJECT_BINARY_DIR}/**/autoconf.h")
 add_custom_command(
   OUTPUT
   ${PROVISION_HEX}
   COMMAND
   ${PYTHON_EXECUTABLE}
   ${NRF_BOOTLOADER_SCRIPTS}/provision.py
-  --generated-conf-file ${PROJECT_BINARY_DIR}/include/generated/generated_dts_board.conf
+  --generated-conf-files ${autoconf_files}
   --signature-private-key-file "${signature_private_key_file}"
   --public-key-files "${public_key_files}"
   --output ${PROVISION_HEX}
