@@ -29,20 +29,27 @@ bool _verify_sig(const u8_t *data, u32_t data_len, const u8_t *sig,
 	return (retval == 0);
 }
 
-bool verify_sig_external(const u8_t *data,
-			  	u32_t data_len,
-				const u8_t sig,
-				const u8_t *public_keym
-				u32_t hash_len)
+/* Returns 0 for succes or -1 for failure */
+int bl_ecdsa_verify_secp256r1(const u8_t * hash,
+							  u32_t hash_len,
+							  const u8_t * public_key,
+							  const u8_t * signature)
 {
-	/*TODO do we want VLA or should we just do a max hash len for the function ? */
-	u8_t hash[CONFIG_SB_HASH_LEN]; 
-
-	if (!get_hash(hash, data, data_len, true)) {
-		return false;
+	int retval;
+	/* maybe we need internal data
+	 * u8_t hash[CONFIG_SB_HASH_LEN];
+	 */
+	if(hash_len != 32)
+	{
+		return 0xf00dbabe;
 	}
 
-	int retval = occ_ecdsa_p256_verify_hash(sig, hash, pk);
-	/* TODO: Truncated return value, standarize on return codes(MBEDTLS?) */
-	return (retval == 0);
+	retval = occ_ecdsa_p256_verify_hash(signature, hash, public_key);
+	
+	if(retval == 0)
+	{
+		return retval;
+	}
+
+	return retval;
 }

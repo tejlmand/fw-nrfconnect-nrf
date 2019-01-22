@@ -20,12 +20,17 @@ endif()
 
 if (CONFIG_SB_CRYPTO_OBERON_SHA256)
   target_sources(bl_crypto PRIVATE bl_crypto_oberon_hash.c)
+  target_sources(bl_crypto PRIVATE bl_crypto_oberon_sha256.c)
 elseif (CONFIG_SB_CRYPTO_CC310_SHA256)
   target_sources(bl_crypto PRIVATE bl_crypto_cc310_hash.c)
   target_sources(bl_crypto PRIVATE bl_crypto_cc310_common.c)
+  target_sources(bl_crypto PRIVATE bl_crypto_cc310_sha256.c)
 else()
   message(FATAL_ERROR "No hash implementation chosen for bootloader.")
 endif()
-
+set(NRFXLIB_BASE ${ZEPHYR_BASE}/../nrfxlib)
 zephyr_sources(bl_crypto_client.c)
 zephyr_include_directories(.)
+#TODO: Move this out of this Cmake File? or find a better PATH variable
+zephyr_include_directories(${NRFXLIB_BASE}/crypto/nrf_oberon/include)
+zephyr_include_directories(${NRFXLIB_BASE}/crypto/nrf_cc310_bl/include)

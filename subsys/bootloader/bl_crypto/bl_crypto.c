@@ -91,7 +91,9 @@ __attribute__((used)) = {
 	.abi = {
 		.crypto_root_of_trust = crypto_root_of_trust_external,
 		.verify_sig = verify_sig_external,
-		.test_print = test_print,
+		.bl_sha256_init = bl_sha256_init,
+		.bl_sha256_update = bl_sha256_update,
+		.bl_sha256_finish = bl_sha256_finish,
+		.bl_ecdsa_verify_secp256r1 = bl_ecdsa_verify_secp256r1,
 	},
 };
-

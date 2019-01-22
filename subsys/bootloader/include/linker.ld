@@ -13,7 +13,6 @@
 
 #define _LINKER
 #define _ASMLANGUAGE
-
 #include <autoconf.h>
 #include <linker/sections.h>
 #include <generated_dts_board.h>
@@ -95,7 +94,7 @@ _region_min_align = 4;
 MEMORY
     {
     FLASH                 (rx) : ORIGIN = CONFIG_FLASH_BASE_ADDRESS +
-    FLASH_AREA_SECURE_BOOT_OFFSET_0, LENGTH = FLASH_AREA_SECURE_BOOT_SIZE_0
+    FLASH_AREA_SECURE_BOOT_OFFSET_0, LENGTH = FLASH_AREA_SECURE_BOOT_SIZE_0 + 3K
 #ifdef CONFIG_TI_CCFG_PRESENT
     FLASH_CCFG            (rwx): ORIGIN = CCFG_ADDR, LENGTH = CCFG_SIZE
 #endif

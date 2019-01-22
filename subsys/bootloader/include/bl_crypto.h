@@ -45,21 +45,50 @@ int crypto_init(void);
  *
  * @remark No parameter can be NULL.
  */
+#if _LIBOBERON
+#include <occ_sha256.h>
+typedef occ_sha256_ctx bl_sha256_ctx_t;
+#else
+#include <nrf_cc310_bl_hash_sha256.h>
+typedef nrf_cc310_bl_hash_context_sha256_t bl_sha256_ctx_t;
+#endif
+
 TYPE_AND_DECL(int, crypto_root_of_trust, const u8_t *pk,
 					 const u8_t *pk_hash,
 					 const u8_t *sig,
 					 const u8_t *fw,
 					 const u32_t fw_len);
 
-TYPE_AND_DECL(int, test_print, int i); 
-TYPE_AND_DECL(bool, verify_sig, const u8_t * data, u32_t data_len, const u8_t * sig, const u8_t * pk); 
+TYPE_AND_DECL(bool, verify_sig,
+		const u8_t * data,
+		u32_t data_len, 
+		const u8_t * sig,
+		const u8_t * pk); 
+TYPE_AND_DECL(int, bl_sha256_init,
+		bl_sha256_ctx_t * ctx);
+TYPE_AND_DECL(int, bl_sha256_update,
+		bl_sha256_ctx_t * ctx, 
+		const u8_t * data, 
+		u32_t data_len);
+TYPE_AND_DECL(int, bl_sha256_finish, 
+		bl_sha256_ctx_t * ctx, 
+		u8_t * output);
+TYPE_AND_DECL(int, bl_ecdsa_verify_secp256r1,
+		const u8_t * hash, 
+		u32_t hash_len,
+		const u8_t * sig, 
+		const u8_t * public_key
+		);
 
 struct bl_crypto_abi {
 	struct fw_abi_info header;
 	struct {
 		crypto_root_of_trust_t crypto_root_of_trust;
 		verify_sig_t verify_sig; 
-		test_print_t test_print;
+		bl_sha256_init_t bl_sha256_init;
+		bl_sha256_update_t bl_sha256_update;
+		bl_sha256_finish_t bl_sha256_finish;
+		bl_ecdsa_verify_secp256r1_t bl_ecdsa_verify_secp256r1;
 	} abi;
 };
 

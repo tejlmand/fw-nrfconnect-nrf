@@ -24,15 +24,8 @@ int crypto_root_of_trust(const u8_t *pk, const u8_t *pk_hash,
 			 const u8_t *sig, const u8_t *fw,
 			 const u32_t fw_len)
 {
-	print_header((struct bl_crypto_abi*)(*abi_getter_in.abis));
-
 	return ((struct bl_crypto_abi*)(*abi_getter_in.abis))->abi.
 		crypto_root_of_trust(pk, pk_hash, sig, fw, fw_len);
-}
-
-
-int test_print(int i){
-	printk("Test print: Ret val = %d\n\r", ((struct bl_crypto_abi*)(*abi_getter_in.abis))->abi.test_print(i));
 }
 
 bool verify_sig(const u8_t *data, u32_t data_len, const u8_t *sig,
@@ -42,3 +35,22 @@ bool verify_sig(const u8_t *data, u32_t data_len, const u8_t *sig,
 		verify_sig(data, data_len, sig, pk);
 }
 
+int bl_sha256_init(bl_sha256_ctx_t * ctx)
+{
+	return ((struct bl_crypto_abi*)(*abi_getter_in.abis))->abi.bl_sha256_init(ctx);
+}
+
+int bl_sha256_update(bl_sha256_ctx_t * ctx, const u8_t * data, u32_t data_len)
+{
+	return ((struct bl_crypto_abi*)(*abi_getter_in.abis))->abi.bl_sha256_update(ctx, data, data_len);	
+}
+
+int bl_sha256_finish(bl_sha256_ctx_t * ctx, u8_t * output)
+{
+	return ((struct bl_crypto_abi*)(*abi_getter_in.abis))->abi.bl_sha256_finish(ctx, output);	
+}
+
+int bl_ecdsa_verify_secp256r1(const u8_t * hash, u32_t hash_len, const u8_t * public_key, const u8_t * signature)
+{
+	return ((struct bl_crypto_abi*)(*abi_getter_in.abis))->abi.bl_ecdsa_verify_secp256r1(hash, hash_len, public_key, signature);	
+}

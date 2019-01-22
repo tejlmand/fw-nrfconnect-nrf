@@ -44,26 +44,28 @@ bool _verify_sig(const u8_t *data, u32_t data_len, const u8_t *sig,
 	return retval;
 }
 
-bool verify_sig_external(const u8_t *data,
-			  	u32_t data_len,
-				const u8_t sig,
-				const u8_t *public_keym
-				u32_t hash_len)
+int bl_ecdsa_verify_secp256r1(const u8_t * hash,
+							  u32_t hash_len,
+							  const u8_t * public_key,
+							  const u8_t * signature)
 {
+	CRYSError_t ret;
 	nrf_cc310_bl_ecdsa_verify_context_secp256r1_t context;
-	nrf_cc310_bl_hash_digest_sha256_t hash;
-	
-	if (!get_hash((u8_t *)&hash, data, data_len, true)) {
-		return false;
-	}
-
-	bool retval = (nrf_cc310_bl_ecdsa_verify_secp256r1(
-			       &context,
-			       (nrf_cc310_bl_ecc_public_key_secp256r1_t *)pk,
-			       (nrf_cc310_bl_ecc_signature_secp256r1_t *)sig,
-			       hash, hash_len) == CRYS_OK);
 
 	cc310_bl_backend_enable();
+	ret = nrf_cc310_bl_ecdsa_verify_secp256r1(&context,
+  (nrf_cc310_bl_ecc_public_key_secp256r1_t *) public_key,
+  (nrf_cc310_bl_ecc_signature_secp256r1_t *)  signature,
+											  hash,
+											  hash_len
+	);
+	cc310_bl_backend_disable();
+	
+	if(ret != CRYS_OK)
+	{
+		return ret; 
+	}
 
-	return retval;
+	return CRYS_OK; 
+
 }
