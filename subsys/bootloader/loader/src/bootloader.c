@@ -11,6 +11,7 @@
 #include <nrf.h>
 #include <errno.h>
 #include <generated_dts_board.h>
+#include <pm_config.h>
 #include "bl_crypto.h"
 #include "fw_metadata.h"
 
@@ -145,14 +146,15 @@ void _Cstart(void) __attribute__((alias("main_bl")));
 void main_bl(void)
 {
 #if CONFIG_SB_FLASH_PROTECT
-	fprotect_area(FLASH_AREA_SECURE_BOOT_OFFSET,
-			FLASH_AREA_SECURE_BOOT_SIZE);
+//TODO use proper defines
+	fprotect_area(PM_CFG_B0_ADDRESS,
+		      PM_CFG_B0_SIZE);
 #endif /* CONFIG_SB_FLASH_PROTECT */
 #if defined(CONFIG_SB_DEBUG_PORT_SEGGER_RTT)
 	SEGGER_RTT_Init();
 #elif defined(CONFIG_SB_DEBUG_PORT_UART)
 	uart_init();
 #endif /* CONFIG_SB_RTT */
-	boot_from((u32_t *)(0x00000000 + FLASH_AREA_APP_OFFSET));
+	boot_from((u32_t *)s0_address_read());
 	CODE_UNREACHABLE;
 }

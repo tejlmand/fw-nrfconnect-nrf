@@ -43,7 +43,7 @@ def find_provision_memory_section(config_files):
 
     if 's0' not in adr.keys() or 's1' not in adr.keys() or 'provision' not in adr.keys():
         raise RuntimeError("Could not find value for one of S0, S1 or provision address.")
-    
+
     return adr['s0'], adr['s1'], adr['provision']
 
 

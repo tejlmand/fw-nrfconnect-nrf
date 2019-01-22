@@ -4,11 +4,8 @@ set(NRF_BOOTLOADER_SCRIPTS ${NRF_DIR}/scripts/bootloader)
 print(CMAKE_BINARY_DIR)
 set(PROVISION_HEX_NAME     provision_data.hex)
 set(PROVISION_HEX          ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME})
-set(SIGNED_KERNEL_HEX      ${CMAKE_BINARY_DIR}/signed_${KERNEL_HEX_NAME})
+set(SIGNED_KERNEL_HEX      ${CMAKE_BINARY_DIR}/signed_by_b0_${KERNEL_HEX_NAME})
 
-message("ADDING")
-print(SIGNED_KERNEL_HEX)
-print(PROVISION_HEX)
 set_property(
   GLOBAL APPEND PROPERTY
   HEX_FILES_TO_MERGE
@@ -27,7 +24,6 @@ set(kernel_elf ${IMAGE}kernel_elf)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/debug_keys.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/fw_info_magic.cmake)
 
-print(PROJECT_BINARY_DIR)
 add_custom_command(
   OUTPUT
   ${SIGNED_KERNEL_HEX}
