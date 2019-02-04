@@ -565,12 +565,12 @@ static void send_report_mouse(void)
 
 		event->dx        = state.last_dx;
 		event->dy        = state.last_dy;
-		event->wheel     = state.wheel_acc;
+		event->wheel     = state.wheel_acc / 2;
 		event->button_bm = 0;
 
 		state.last_dx   = 0;
 		state.last_dy   = 0;
-		state.wheel_acc = 0;
+		state.wheel_acc -= event->wheel * 2;
 
 		/* Traverse pressed keys and build mouse buttons report */
 		for (size_t i = 0; i < ARRAY_SIZE(rd->items.item); i++) {
@@ -602,8 +602,16 @@ static void report_send(enum target_report tr, bool check_state)
 
 	struct report_state *rs = &state.selected->state[tr];
 
-	if (!check_state || (rs->state == STATE_CONNECTED_IDLE)) {
-		do {
+	if (!check_state || (rs->state != STATE_DISCONNECTED)) {
+		unsigned int pipeline_depth;
+
+		if (state.selected->is_usb) {
+			pipeline_depth = 1;
+		} else {
+			pipeline_depth = 2;
+		}
+
+		while (rs->cnt < pipeline_depth) {
 			switch (tr) {
 			case TARGET_REPORT_KEYBOARD:
 				send_report_keyboard();
@@ -629,7 +637,7 @@ static void report_send(enum target_report tr, bool check_state)
 			/* To make sure report is sampled on every connection
 			 * event, add one additional report to the pipeline.
 			 */
-		} while ((rs->cnt == 1) && !state.selected->is_usb);
+		}
 
 		rs->state = STATE_CONNECTED_BUSY;
 	}
@@ -716,7 +724,7 @@ static void report_issued(const void *subscriber_id, enum target_report tr,
 		}
 	}
 
-	if (update_needed) {
+	if (update_needed && (rs->cnt == 0)) {
 		/* Something was updated. Report must be issued. */
 		report_send(tr, false);
 	}

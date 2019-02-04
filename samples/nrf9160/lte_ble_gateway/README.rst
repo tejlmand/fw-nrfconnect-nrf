@@ -4,7 +4,7 @@ nRF9160: LTE Sensor Gateway
 ###########################
 
 The LTE Sensor Gateway sample demonstrates how to transmit sensor data from an nRF9160 DK to the `nRF Cloud`_.
-Unlike the :ref:`nrf_cloud` sample, the sensor data is collected via Bluetooth LE.
+Unlike the :ref:`asset_tracker` sample, the sensor data is collected via Bluetooth LE.
 Therefore, this sample acts as a gateway between Bluetooth LE and the LTE connection to the nRF Cloud.
 
 Overview
@@ -38,7 +38,7 @@ Building and running
 
 This sample can be found under :file:`samples/lte-gateway/` in the |NCS| folder structure.
 
-The sample is built as a non-secure firmware image, thus with ``CONFIG_TRUSTED_EXECUTION_NONSECURE=y`` set in ``prj.conf``.
+The sample is built as a non-secure firmware image for the nrf9160_pca10090ns board.
 It can be programmed independently from the secure boot firmware.
 
 See :ref:`gs_programming` for information about how to build and program the application.
@@ -60,8 +60,8 @@ Before you program the sample application onto the main controller, you must pro
 After programming the board controller, you must program the :ref:`secure_boot` sample and the LTE Sensor Gateway sample to the main controller:
 
 1. Put the **SW5** switch (marked debug/prog) in the **NRF91** position to program the main controller.
-#. Build the :ref:`secure_boot` sample and program it.
-#. Build the LTE Sensor Gateway sample (this sample) and program it.
+#. Build the :ref:`secure_boot` sample for the nrf9160_pca10090 board and program it.
+#. Build the LTE Sensor Gateway sample (this sample) for the nrf9160_pca10090ns board and program it.
 #. Verify that the sample was programmed successfully by connecting to the first serial port with a terminal emulator (for example, PuTTY) and checking the output.
    See :ref:`putty` for the required settings.
 
@@ -85,7 +85,7 @@ After programming the sample and all prerequisites to the board, test it by perf
    This might take several minutes.
 #. Observe that LED 3 starts blinking as the connection to nRF Cloud is established.
 
-   See :ref:`nrf_cloud_user_interface` in the :ref:`nrf_cloud` sample documentation for detailed information about the different LED states used by the sample.
+   See :ref:`asset_tracker_user_interface` in the :ref:`asset_tracker` sample documentation for detailed information about the different LED states used by the sample.
 #. The first time you start the sample, pair the device to your account:
 
    a. Observe that both LED 3 and 4 start blinking, indicating that the pairing procedure has been initiated.
@@ -111,10 +111,10 @@ This sample uses the following libraries:
 
 From |NCS|
   * :ref:`lib_nrf_cloud`
-  * ``lib/gps_sim``
+  * ``drivers/gps_sim``
   * ``lib/bsd_lib``
-  * ``lib/sensor_sim``
-  * ``lib/dk_buttons_and_leds``
+  * ``drivers/sensor/sensor_sim``
+  * :ref:`dk_buttons_and_leds_readme`
   * ``drivers/lte_link_control``
 
 From Zephyr

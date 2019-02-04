@@ -56,8 +56,7 @@ add_custom_command(
   ${PYTHON_EXECUTABLE}
   ${NRF_BOOTLOADER_SCRIPTS}/provision.py
   --generated-conf-files ${autoconf_files}
-  --signature-private-key-file "${signature_private_key_file}"
-  --public-key-files "${public_key_files}"
+  --public-key-files "${SIGNATURE_PUBLIC_KEY_FILE},${PUBLIC_KEY_FILES}"
   --output ${PROVISION_HEX}
   DEPENDS ${provision_depends}
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}

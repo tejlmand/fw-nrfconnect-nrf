@@ -111,6 +111,7 @@ extern "C" {
 
 //------------------------------------------------------------------------------
 
+#include <kernel.h>
 
 /**
  * @brief Macro for delaying the code execution for at least the specified time.

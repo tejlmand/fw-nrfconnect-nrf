@@ -55,6 +55,18 @@ void orientation_detector_init(struct device *accel_device);
 int orientation_detector_poll(
 	struct orientation_detector_sensor_data *sensor_data);
 
+
+/**@brief Determine and store the static offset of the accelerometer that is
+ * used to infer device orientation.
+ *
+ * The device must be placed on a flat
+ * surface facing up when this function is called.
+ *
+  *  @retval 0           If the operation was successful.
+  *                      Otherwise, a (negative) error code is returned.
+ */
+int orientation_detector_calibrate(void);
+
 #ifdef __cplusplus
 }
 #endif

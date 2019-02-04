@@ -12,15 +12,24 @@ set(NRF_SUPPORTED_BOARDS
   nrf52840_pca10059
   nrf52_pca63519)
 
+set(NRF_SUPPORTED_BUILD_TYPES
+  ZDebug
+  ZDebugWithShell
+  ZRelease)
+
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE ZDebug)
+endif()
+
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/configuration/${BOARD}.overlay")
+        set(DTC_OVERLAY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/configuration/${BOARD}.overlay")
+endif()
+
 include(../../cmake/boilerplate.cmake)
 
 # Define configuration files.
 macro(set_conf_file)
-  set(CONF_FILE
-	"configuration/app_${BOARD}.conf"
-	"configuration/nrfconnect.conf"
-	"configuration/zephyr.conf"
-	)
+  set(CONF_FILE "configuration/${BOARD}_${CMAKE_BUILD_TYPE}.conf")
 endmacro()
 
 ################################################################################

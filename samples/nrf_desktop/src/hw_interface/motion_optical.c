@@ -6,6 +6,8 @@
 
 #include <zephyr.h>
 #include <atomic.h>
+#include <spinlock.h>
+#include <misc/byteorder.h>
 
 #include <soc.h>
 #include <device.h>
@@ -16,6 +18,7 @@
 #include "motion_event.h"
 #include "power_event.h"
 #include "hid_event.h"
+#include "config_event.h"
 
 #define MODULE motion
 #include "module_state_event.h"
@@ -113,22 +116,35 @@ LOG_MODULE_REGISTER(MODULE, CONFIG_DESKTOP_MOTION_LOG_LEVEL);
 /* Register count used for reading a single motion burst */
 #define OPTICAL_BURST_SIZE			6
 
+#define OPTICAL_MAX_CPI				12000
+#define OPTICAL_MIN_CPI				100
+
 /* Sampling thread poll timeout */
 #define OPTICAL_POLL_TIMEOUT_MS			500
 
-#define OPTICAL_THREAD_STACK_SIZE		512
+#define OPTICAL_THREAD_STACK_SIZE		400
 #define OPTICAL_THREAD_PRIORITY			K_PRIO_PREEMPT(0)
 
+#define NODATA_LIMIT				10
 
 extern const u16_t firmware_length;
 extern const u8_t firmware_data[];
 
 
-enum {
+enum state {
+	STATE_DISABLED,
 	STATE_IDLE,
 	STATE_FETCHING,
-	STATE_SUSPENDING,
 	STATE_SUSPENDED,
+};
+
+struct sensor_state {
+	struct k_spinlock lock;
+
+	enum state state;
+	bool connected;
+	bool sample;
+	bool last_read_burst;
 };
 
 
@@ -149,9 +165,19 @@ static struct gpio_callback gpio_cb;
 static struct device *gpio_dev;
 static struct device *spi_dev;
 
-static atomic_t state;
-static atomic_t connected;
-static bool last_read_burst;
+static struct sensor_state state;
+
+static atomic_t sensor_cpi;
+static atomic_t sensor_downshift_run;
+static atomic_t sensor_downshift_rest1;
+static atomic_t sensor_downshift_rest2;
+
+struct config_options {
+	u16_t cpi;
+	u32_t time_run;
+	u32_t time_rest1;
+	u32_t time_rest2;
+};
 
 static int spi_cs_ctrl(bool enable)
 {
@@ -177,7 +203,7 @@ static int reg_read(u8_t reg, u8_t *buf)
 	int err;
 
 	__ASSERT_NO_MSG((reg & SPI_WRITE_MASK) == 0);
-	last_read_burst = false;
+	state.last_read_burst = false;
 
 	err = spi_cs_ctrl(true);
 	if (err) {
@@ -235,7 +261,7 @@ static int reg_write(u8_t reg, u8_t val)
 	int err;
 
 	__ASSERT_NO_MSG((reg & SPI_WRITE_MASK) == 0);
-	last_read_burst = false;
+	state.last_read_burst = false;
 
 	err = spi_cs_ctrl(true);
 	if (err) {
@@ -284,12 +310,12 @@ static int motion_burst_read(u8_t *data, size_t burst_size)
 	/* Write any value to motion burst register only if there have been
 	 * other SPI transmissions with sensor since last burst read.
 	 */
-	if (!last_read_burst) {
+	if (!state.last_read_burst) {
 		err = reg_write(OPTICAL_REG_MOTION_BURST, 0x00);
 		if (err) {
 			goto error;
 		}
-		last_read_burst = true;
+		state.last_read_burst = true;
 	}
 
 	err = spi_cs_ctrl(true);
@@ -351,7 +377,7 @@ static int burst_write(u8_t reg, const u8_t *buf, size_t size)
 {
 	int err;
 
-	last_read_burst = false;
+	state.last_read_burst = false;
 	err = spi_cs_ctrl(true);
 	if (err) {
 		goto error;
@@ -399,6 +425,95 @@ error:
 	LOG_ERR("SPI reg write failed");
 
 	return err;
+}
+
+static void update_cpi(u16_t cpi)
+{
+	/* Set resolution with CPI step of 100 cpi
+	 * 0x00: 100 cpi (minimum cpi)
+	 * 0x01: 200 cpi
+	 * :
+	 * 0x31: 5000 cpi (default cpi)
+	 * :
+	 * 0x77: 12000 cpi (maximum cpi)
+	 */
+
+	if ((cpi > OPTICAL_MAX_CPI) || (cpi < OPTICAL_MIN_CPI)) {
+		LOG_WRN("CPI value out of range");
+		return;
+	}
+
+	/* Convert CPI to register value */
+	u8_t value = (cpi / 100) - 1;
+
+	LOG_INF("Setting CPI to %u (reg value 0x%x)", cpi, value);
+
+	int err = reg_write(OPTICAL_REG_CONFIG1, value);
+	if (err) {
+		LOG_ERR("Failed to change CPI");
+		module_set_state(MODULE_STATE_ERROR);
+	}
+}
+
+static void update_downshift_time(u8_t reg_addr, u32_t time)
+{
+	/* Set downshift time:
+	 * - Run downshift time (from Run to Rest1 mode)
+	 * - Rest 1 downshift time (from Rest1 to Rest2 mode)
+	 * - Rest 2 downshift time (from Rest2 to Rest3 mode)
+	 */
+	u32_t maxtime;
+	u32_t mintime;
+
+	switch (reg_addr) {
+	case OPTICAL_REG_RUN_DOWNSHIFT:
+		/*
+		 * Run downshift time = OPTICAL_REG_RUN_DOWNSHIFT * 10 ms
+		 */
+		maxtime = 2550;
+		mintime = 10;
+		break;
+
+	case OPTICAL_REG_REST1_DOWNSHIFT:
+		/*
+		 * Rest1 downshift time = OPTICAL_REG_RUN_DOWNSHIFT
+		 *                        * 320 * Rest1 rate (default 1 ms)
+		 */
+		maxtime = 81600;
+		mintime = 320;
+		break;
+
+	case OPTICAL_REG_REST2_DOWNSHIFT:
+		/*
+		 * Rest2 downshift time = OPTICAL_REG_REST2_DOWNSHIFT
+		 *                        * 32 * Rest2 rate (default 100 ms)
+		 */
+		maxtime = 816000;
+		mintime = 3200;
+		break;
+
+	default:
+		LOG_ERR("Not supported");
+		return;
+	}
+
+	if ((time > maxtime) || (time < mintime)) {
+		LOG_WRN("Downshift time %u out of range", time);
+		return;
+	}
+
+	__ASSERT_NO_MSG(mintime > 0);
+
+	/* Convert time to register value */
+	u8_t value = time / mintime;
+
+	LOG_INF("Setting downshift time to %u ms (reg value 0x%x)", time, value);
+
+	int err = reg_write(reg_addr, value);
+	if (err) {
+		LOG_ERR("Failed to change downshift time");
+		module_set_state(MODULE_STATE_ERROR);
+	}
 }
 
 static int firmware_load(void)
@@ -454,16 +569,10 @@ static int firmware_load(void)
 		goto error;
 	}
 
-	/* Write 0x00 to Config2 register for wired mouse or 0x20 for
-	 * wireless mouse design.
+	/* Write 0x20 to Config2 register for wireless mouse design.
+	 * This enables entering rest modes.
 	 */
 	err = reg_write(OPTICAL_REG_CONFIG2, 0x20);
-	if (err) {
-		goto error;
-	}
-
-	/* Set initial CPI resolution. */
-	err = reg_write(OPTICAL_REG_CONFIG1, 0x15);
 	if (err) {
 		goto error;
 	}
@@ -482,58 +591,63 @@ static void irq_handler(struct device *gpiob, struct gpio_callback *cb,
 	/* Enter active polling mode until no motion */
 	gpio_pin_disable_callback(gpio_dev, OPTICAL_PIN_MOTION);
 
-	if (atomic_cas(&state, STATE_IDLE, STATE_FETCHING)) {
+	switch (state.state) {
+	case STATE_IDLE:
 		/* Wake up thread */
+		state.state = STATE_FETCHING;
+		state.sample = true;
 		k_sem_give(&sem);
-	} else if (atomic_get(&state) == STATE_SUSPENDED) {
-		/* Wake up system - this will wake up thread */
-		struct wake_up_event *event = new_wake_up_event();
+		break;
 
-		if (event) {
-			EVENT_SUBMIT(event);
-		}
-	} else {
-		/* Ignore when fetching or suspending */
+	case STATE_SUSPENDED:
+		/* Wake up system - this will wake up thread */
+		EVENT_SUBMIT(new_wake_up_event());
+		break;
+
+	case STATE_FETCHING:
+	case STATE_DISABLED:
+		/* Invalid state */
+		__ASSERT_NO_MSG(false);
+		break;
+
+	default:
+		__ASSERT_NO_MSG(false);
+		break;
 	}
 }
 
-static int motion_read(void)
+static int motion_read(bool send_event)
 {
 	u8_t data[OPTICAL_BURST_SIZE];
 
 	int err = motion_burst_read(data, sizeof(data));
-	if (err) {
+	if (err || !send_event) {
 		return err;
 	}
 
+	static unsigned int nodata;
 	if (!data[2] && !data[3] && !data[4] && !data[5]) {
-		static unsigned nodata;
-
-		if (!nodata) {
-			nodata = true;
+		if (nodata < NODATA_LIMIT) {
+			nodata++;
 		} else {
-			nodata = false;
+			nodata = 0;
 
 			return -ENODATA;
 		}
+	} else {
+		nodata = 0;
 	}
 
 	struct motion_event *event = new_motion_event();
 
-	if (event) {
-		event->dx =  ((s16_t)(data[5] << 8) | data[4]);
-		event->dy = -((s16_t)(data[3] << 8) | data[2]);
-
-		EVENT_SUBMIT(event);
-	} else {
-		LOG_ERR("No memory");
-		err = -ENOMEM;
-	}
+	event->dx =  ((s16_t)(data[5] << 8) | data[4]);
+	event->dy = -((s16_t)(data[3] << 8) | data[2]);
+	EVENT_SUBMIT(event);
 
 	return err;
 }
 
-static int init(void)
+static int init(struct config_options *options)
 {
 	int err = -ENXIO;
 
@@ -594,6 +708,18 @@ static int init(void)
 		goto error;
 	}
 
+	/* Set initial CPI resolution. */
+	update_cpi(options->cpi);
+	atomic_set(&sensor_cpi, options->cpi);
+
+	/* Set initial power mode downshift times. */
+	update_downshift_time(OPTICAL_REG_RUN_DOWNSHIFT, options->time_run);
+	update_downshift_time(OPTICAL_REG_REST1_DOWNSHIFT, options->time_rest1);
+	update_downshift_time(OPTICAL_REG_REST2_DOWNSHIFT, options->time_rest2);
+	atomic_set(&sensor_downshift_run, options->time_run);
+	atomic_set(&sensor_downshift_rest1, options->time_rest1);
+	atomic_set(&sensor_downshift_rest2, options->time_rest2);
+
 	/* Verify product id */
 	u8_t product_id;
 	err = reg_read(OPTICAL_REG_PRODUCT_ID, &product_id);
@@ -618,7 +744,10 @@ static int init(void)
 		goto error;
 	}
 
+	k_spinlock_key_t key = k_spin_lock(&state.lock);
+	state.state = STATE_IDLE;
 	err = gpio_pin_enable_callback(gpio_dev, OPTICAL_PIN_MOTION);
+	k_spin_unlock(&state.lock, key);
 	if (err) {
 		LOG_ERR("Cannot enable GPIO interrupt");
 		goto error;
@@ -635,73 +764,113 @@ error:
 	return err;
 }
 
+static void update_config(const u8_t config_id, const u8_t *data)
+{
+	switch (config_id) {
+	case CONFIG_EVENT_ID_MOUSE_CPI:
+		atomic_set(&sensor_cpi, sys_get_le16(data));
+		break;
+
+	case CONFIG_EVENT_ID_MOUSE_DOWNSHIFT_RUN:
+		atomic_set(&sensor_downshift_run, sys_get_le32(data));
+		break;
+
+	case CONFIG_EVENT_ID_MOUSE_DOWNSHIFT_REST1:
+		atomic_set(&sensor_downshift_rest1, sys_get_le32(data));
+		break;
+
+	case CONFIG_EVENT_ID_MOUSE_DOWNSHIFT_REST2:
+		atomic_set(&sensor_downshift_rest2, sys_get_le32(data));
+		break;
+
+	default:
+		/* Not for us */
+		return;
+	}
+
+	k_sem_give(&sem);
+}
+
+static void write_config(struct config_options *options)
+{
+	u16_t new_cpi = atomic_get(&sensor_cpi);
+	if (new_cpi != options->cpi) {
+		options->cpi = new_cpi;
+		update_cpi(options->cpi);
+	}
+
+	u32_t new_time = atomic_get(&sensor_downshift_run);
+	if (new_time != options->time_run) {
+		options->time_run = new_time;
+		update_downshift_time(OPTICAL_REG_RUN_DOWNSHIFT,
+				      options->time_run);
+	}
+
+	new_time = atomic_get(&sensor_downshift_rest1);
+	if (new_time != options->time_rest1) {
+		options->time_rest1 = new_time;
+		update_downshift_time(OPTICAL_REG_REST1_DOWNSHIFT,
+				      options->time_rest1);
+	}
+
+	new_time = atomic_get(&sensor_downshift_rest2);
+	if (new_time != options->time_rest2) {
+		options->time_rest2 = new_time;
+		update_downshift_time(OPTICAL_REG_REST2_DOWNSHIFT,
+				      options->time_rest2);
+	}
+}
+
 /* Optical hardware interface state machine. */
 static void optical_thread_fn(void)
 {
-	s32_t timeout = K_FOREVER;
+	s32_t timeout = K_MSEC(OPTICAL_POLL_TIMEOUT_MS);
+	struct config_options options = {
+		.cpi = CONFIG_DESKTOP_OPTICAL_DEFAULT_CPI,
+		.time_run = CONFIG_DESKTOP_OPTICAL_RUN_DOWNSHIFT_TIME_MS,
+		.time_rest1 = CONFIG_DESKTOP_OPTICAL_REST1_DOWNSHIFT_TIME_MS,
+		.time_rest2 = CONFIG_DESKTOP_OPTICAL_REST2_DOWNSHIFT_TIME_MS
+	};
 
-	atomic_set(&state, STATE_IDLE);
-
-	int err = init();
+	int err = init(&options);
 
 	while (!err) {
 		err = k_sem_take(&sem, timeout);
-
-		switch (atomic_get(&state)) {
-		case STATE_IDLE:
-			timeout = K_FOREVER;
-			break;
-
-		case STATE_FETCHING:
-			if (!atomic_get(&connected)) {
-				/* HID notification was disabled. */
-				/* Ignore possible timeout. */
-				err = -ENODATA;
-			}
-			if (err == 0) {
-				err = motion_read();
-			}
-			if ((err == -ENODATA) || (err == -EAGAIN)) {
-				/* No motion or timeout. */
-				LOG_DBG("Stop polling, wait for interrupt");
-
-				/* Read data to clear interrupt. */
-				u8_t data[OPTICAL_BURST_SIZE];
-				err = motion_burst_read(data, sizeof(data));
-
-				/* Switch state. */
-				atomic_cas(&state, STATE_FETCHING,
-						STATE_IDLE);
-				gpio_pin_enable_callback(gpio_dev,
-						OPTICAL_PIN_MOTION);
-				timeout = K_FOREVER;
-			} else {
-				timeout = K_MSEC(OPTICAL_POLL_TIMEOUT_MS);
-			}
-			break;
-
-		case STATE_SUSPENDING:
-			__ASSERT_NO_MSG(!err || (err == -EAGAIN));
-			err = 0; /* Ignore possible timeout. */
-			atomic_set(&state, STATE_SUSPENDED);
-			gpio_pin_enable_callback(gpio_dev, OPTICAL_PIN_MOTION);
-			module_set_state(MODULE_STATE_STANDBY);
-			timeout = K_FOREVER;
-			break;
-
-		case STATE_SUSPENDED:
-			/* Sensor will downshift to "rest modes" when inactive.
-			 * Interrupt is left enabled to wake system up.
-			 */
-			break;
-
-		default:
-			__ASSERT_NO_MSG(false);
-			break;
+		if (err && (err != -EAGAIN)) {
+			continue;
 		}
+
+		if (IS_ENABLED(CONFIG_DESKTOP_CONFIG_CHANNEL_ENABLE)) {
+			write_config(&options);
+		}
+
+		k_spinlock_key_t key = k_spin_lock(&state.lock);
+		bool sample = (state.state == STATE_FETCHING) &&
+			      state.connected &&
+			      state.sample;
+		state.sample = false;
+		k_spin_unlock(&state.lock, key);
+
+		err = motion_read(sample);
+
+		if (!sample) {
+			timeout = K_MSEC(OPTICAL_POLL_TIMEOUT_MS);
+			continue;
+		}
+		timeout = K_FOREVER;
+
+		key = k_spin_lock(&state.lock);
+		if ((state.state == STATE_FETCHING) && (err == -ENODATA)) {
+			state.state = STATE_IDLE;
+			gpio_pin_enable_callback(gpio_dev,
+						 OPTICAL_PIN_MOTION);
+			err = 0;
+		}
+		k_spin_unlock(&state.lock, key);
 	}
+
 	/* This thread is supposed to run forever. */
-	__ASSERT_NO_MSG(false);
+	module_set_state(MODULE_STATE_ERROR);
 }
 
 static bool event_handler(const struct event_header *eh)
@@ -710,9 +879,13 @@ static bool event_handler(const struct event_header *eh)
 		const struct hid_report_sent_event *event =
 			cast_hid_report_sent_event(eh);
 
-		if ((event->report_type == TARGET_REPORT_MOUSE) &&
-		    (atomic_get(&state) == STATE_FETCHING)) {
-			k_sem_give(&sem);
+		if (event->report_type == TARGET_REPORT_MOUSE) {
+			k_spinlock_key_t key = k_spin_lock(&state.lock);
+			if (state.state == STATE_FETCHING) {
+				state.sample = true;
+				k_sem_give(&sem);
+			}
+			k_spin_unlock(&state.lock, key);
 		}
 
 		return false;
@@ -733,12 +906,11 @@ static bool event_handler(const struct event_header *eh)
 				peer_count--;
 			}
 
-			bool new_state = (peer_count != 0);
-			bool old_state = atomic_set(&connected, new_state);
+			bool is_connected = (peer_count != 0);
 
-			if (old_state != new_state) {
-				k_sem_give(&sem);
-			}
+			k_spinlock_key_t key = k_spin_lock(&state.lock);
+			state.connected = is_connected;
+			k_spin_unlock(&state.lock, key);
 		}
 
 		return false;
@@ -755,6 +927,7 @@ static bool event_handler(const struct event_header *eh)
 			initialized = true;
 
 			/* Start state machine thread */
+			__ASSERT_NO_MSG(state.state == STATE_DISABLED);
 			k_thread_create(&thread, thread_stack,
 					OPTICAL_THREAD_STACK_SIZE,
 					(k_thread_entry_t)optical_thread_fn,
@@ -768,33 +941,66 @@ static bool event_handler(const struct event_header *eh)
 	}
 
 	if (is_wake_up_event(eh)) {
-		if (atomic_cas(&state, STATE_SUSPENDED, STATE_FETCHING)) {
-			module_set_state(MODULE_STATE_READY);
+		k_spinlock_key_t key = k_spin_lock(&state.lock);
+		if (state.state == STATE_SUSPENDED) {
+			gpio_pin_disable_callback(gpio_dev,
+						  OPTICAL_PIN_MOTION);
+			state.state = STATE_FETCHING;
+			state.sample = true;
 			k_sem_give(&sem);
+			module_set_state(MODULE_STATE_READY);
 		}
+		k_spin_unlock(&state.lock, key);
 
 		return false;
 	}
 
 	if (is_power_down_event(eh)) {
 		bool suspended = false;
-		switch (atomic_get(&state)) {
+
+		k_spinlock_key_t key = k_spin_lock(&state.lock);
+		switch (state.state) {
+		case STATE_FETCHING:
+		case STATE_IDLE:
+			gpio_pin_enable_callback(gpio_dev,
+						 OPTICAL_PIN_MOTION);
+			state.state = STATE_SUSPENDED;
+			module_set_state(MODULE_STATE_STANDBY);
+
+			/* Sensor will downshift to "rest modes" when inactive.
+			 * Interrupt is left enabled to wake system up.
+			 */
+
+			/* Fall-through */
+
 		case STATE_SUSPENDED:
 			suspended = true;
 			break;
 
-		case STATE_SUSPENDING:
+		case STATE_DISABLED:
 			/* No action */
 			break;
 
 		default:
-			atomic_set(&state, STATE_SUSPENDING);
-			k_sem_give(&sem);
+			__ASSERT_NO_MSG(false);
 			break;
 		}
+		k_spin_unlock(&state.lock, key);
 
 		return !suspended;
 	}
+
+	if (IS_ENABLED(CONFIG_DESKTOP_CONFIG_CHANNEL_ENABLE)) {
+		if (is_config_event(eh)) {
+			const struct config_event *event =
+				cast_config_event(eh);
+
+			update_config(event->id, event->data);
+
+			return false;
+		}
+	}
+
 	/* If event is unhandled, unsubscribe. */
 	__ASSERT_NO_MSG(false);
 
@@ -805,4 +1011,5 @@ EVENT_SUBSCRIBE(MODULE, module_state_event);
 EVENT_SUBSCRIBE(MODULE, wake_up_event);
 EVENT_SUBSCRIBE(MODULE, hid_report_sent_event);
 EVENT_SUBSCRIBE(MODULE, hid_report_subscription_event);
+EVENT_SUBSCRIBE(MODULE, config_event);
 EVENT_SUBSCRIBE_EARLY(MODULE, power_down_event);

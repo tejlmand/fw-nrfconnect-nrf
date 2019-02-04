@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 #include <bluetooth/gatt.h>
-#include <bluetooth/services/ble_link_ctx_manager.h>
+#include <bluetooth/conn_ctx.h>
 
 /** Length of the Boot Mouse Input Report. */
 #define BOOT_MOUSE_INPUT_REP_CHAR_LEN	8
@@ -37,24 +37,24 @@ extern "C" {
  * @param _name Name of the HIDS instance.
  * @param ...               Lengths of HIDS reports
  */
-#define HIDS_DEF(_name, ...)				                       \
-	BLE_LINK_CTX_MANAGER_DEF(_name,                                        \
-				 CONFIG_BT_GATT_HIDS_MAX_CLIENT_COUNT,         \
-				 _BLE_HIDS_LINK_CTX_SIZE_CALC(__VA_ARGS__));   \
+#define HIDS_DEF(_name, ...)						       \
+	BT_CONN_CTX_DEF(_name,						       \
+			CONFIG_BT_GATT_HIDS_MAX_CLIENT_COUNT,		       \
+			_BLE_HIDS_CONN_CTX_SIZE_CALC(__VA_ARGS__));	       \
 	static struct bt_gatt_attr					       \
 		CONCAT(_name, _attr_tab)[CONFIG_BT_GATT_HIDS_ATTR_MAX] = { 0 };\
 	static struct hids _name =					       \
 	{								       \
 		.svc = { .attrs = CONCAT(_name, _attr_tab) },		       \
-		.ctx_manager = &CONCAT(_name, _link_manager),                  \
+		.conn_ctx = &CONCAT(_name, _ctx_lib),			       \
 	}
 
 
 /**@brief Helping macro for @ref HIDS_DEF, that calculates
  *        the link context size for BLE HIDS instance.
  */
-#define _BLE_HIDS_LINK_CTX_SIZE_CALC(...)             \
-	(MACRO_MAP(_BLE_HIDS_REPORT_ADD, __VA_ARGS__) \
+#define _BLE_HIDS_CONN_CTX_SIZE_CALC(...)                                      \
+	(MACRO_MAP(_BLE_HIDS_REPORT_ADD, __VA_ARGS__)			       \
 	sizeof(struct hids_conn_data))
 
 /**@brief Helping macro for @ref BLE_HIDS_LINK_CTX_SIZE_CALC,
@@ -382,8 +382,8 @@ struct hids {
 	/** Flag indicating that the device has keyboard capabilities. */
 	bool is_kb;
 
-	/** Pointer to BLE Link Context manager instance. */
-	struct ble_link_ctx_manager *ctx_manager;
+	/** Bluetooth connection contexts. */
+	struct bt_conn_ctx_lib *conn_ctx;
 };
 
 /** @brief HID Connection context data structure.
@@ -472,7 +472,7 @@ int hids_notify_disconnected(struct hids *hids_obj, struct bt_conn *conn);
  */
 int hids_inp_rep_send(struct hids *hids_obj, struct bt_conn *conn,
 		      u8_t rep_index, u8_t const *rep,
-		      u8_t len, bt_gatt_notify_complete_func_t cb);
+		      u8_t len, bt_gatt_complete_func_t cb);
 
 /** @brief Send Boot Mouse Input Report.
  *
@@ -494,7 +494,7 @@ int hids_boot_mouse_inp_rep_send(struct hids *hids_obj,
 				 struct bt_conn *conn,
 				 const u8_t *buttons,
 				 s8_t x_delta, s8_t y_delta,
-				 bt_gatt_notify_complete_func_t cb);
+				 bt_gatt_complete_func_t cb);
 
 /** @brief Send Boot Keyboard Input Report.
  *
@@ -513,7 +513,7 @@ int hids_boot_mouse_inp_rep_send(struct hids *hids_obj,
 int hids_boot_kb_inp_rep_send(struct hids *hids_obj,
 			      struct bt_conn *conn,
 			      u8_t const *rep,
-			      u16_t len, bt_gatt_notify_complete_func_t cb);
+			      u16_t len, bt_gatt_complete_func_t cb);
 
 
 #ifdef __cplusplus

@@ -15,42 +15,67 @@
 
 LOG_MODULE_REGISTER(dk_buttons_and_leds, CONFIG_DK_LIBRARY_LOG_LEVEL);
 
+static const u8_t button_pins[] = {
+#ifdef SW0_GPIO_PIN
+	SW0_GPIO_PIN,
+#endif
+#ifdef SW1_GPIO_PIN
+	SW1_GPIO_PIN,
+#endif
+#ifdef SW2_GPIO_PIN
+	SW2_GPIO_PIN,
+#endif
+#ifdef SW3_GPIO_PIN
+	SW3_GPIO_PIN,
+#endif
+};
+
+static const u8_t led_pins[] = {
+#ifdef LED0_GPIO_PIN
+	LED0_GPIO_PIN,
+#endif
+#ifdef LED1_GPIO_PIN
+	LED1_GPIO_PIN,
+#endif
+#ifdef LED2_GPIO_PIN
+	LED2_GPIO_PIN,
+#endif
+#ifdef LED3_GPIO_PIN
+	LED3_GPIO_PIN,
+#endif
+};
+
 static struct k_delayed_work buttons_scan;
-static const u8_t button_pins[] = { SW0_GPIO_PIN, SW1_GPIO_PIN,
-				    SW2_GPIO_PIN, SW3_GPIO_PIN };
-static const u8_t led_pins[] = { LED0_GPIO_PIN, LED1_GPIO_PIN,
-				 LED2_GPIO_PIN, LED3_GPIO_PIN };
 static button_handler_t button_handler_cb;
 static atomic_t my_buttons;
-struct device *gpio_dev;
+static struct device *gpio_dev;
 
-static int get_buttons(u32_t *mask)
+static u32_t get_buttons(void)
 {
+	u32_t ret = 0;
 	for (size_t i = 0; i < ARRAY_SIZE(button_pins); i++) {
 		u32_t val;
 
 		if (gpio_pin_read(gpio_dev, button_pins[i], &val)) {
 			LOG_ERR("Cannot read gpio pin");
-			return -EFAULT;
+			return 0;
 		}
-
-		if (IS_ENABLED(CONFIG_DK_LIBRARY_INVERT_BUTTONS)) {
-			val = (~val) & 0x01;
+		if ((val && !IS_ENABLED(CONFIG_DK_LIBRARY_INVERT_BUTTONS)) ||
+		    (!val && IS_ENABLED(CONFIG_DK_LIBRARY_INVERT_BUTTONS))) {
+			ret |= 1U << i;
 		}
-
-		*mask |= (val << i);
 	}
 
-	return 0;
+	return ret;
 }
 
 static void buttons_scan_fn(struct k_work *work)
 {
 	static u32_t last_button_scan;
 	static bool initial_run = true;
-	u32_t button_scan = 0;
+	u32_t button_scan;
 
-	get_buttons(&button_scan);
+	button_scan = get_buttons();
 	atomic_set(&my_buttons, (atomic_val_t)button_scan);
 
 	if (!initial_run) {
@@ -102,9 +127,7 @@ int dk_buttons_init(button_handler_t button_handler)
 {
 	int err;
 
-	if (button_handler != NULL) {
-		button_handler_cb = button_handler;
-	}
+	button_handler_cb = button_handler;
 
 	gpio_dev = device_get_binding(DT_GPIO_P0_DEV_NAME);
 	if (!gpio_dev) {
@@ -150,6 +173,11 @@ void dk_read_buttons(u32_t *button_state, u32_t *has_changed)
 	last_state = current_state;
 }
 
+u32_t dk_get_buttons(void)
+{
+	return atomic_get(&my_buttons);
+}
+
 int dk_set_leds(u32_t leds)
 {
 	return dk_set_leds_state(leds, DK_ALL_LEDS_MSK);
@@ -180,4 +208,30 @@ int dk_set_leds_state(u32_t leds_on_mask, u32_t leds_off_mask)
 	}
 
 	return 0;
+}
+
+int dk_set_led(u8_t led_idx, u32_t val)
+{
+	int err;
+
+	if (led_idx > ARRAY_SIZE(led_pins)) {
+		LOG_ERR("LED index out of the range");
+		return -EINVAL;
+	}
+	err = gpio_pin_write(gpio_dev, led_pins[led_idx],
+			IS_ENABLED(CONFIG_DK_LIBRARY_INVERT_LEDS) ? !val : val);
+	if (err) {
+		LOG_ERR("Cannot write LED gpio");
+	}
+	return err;
+}
+
+int dk_set_led_on(u8_t led_idx)
+{
+	return dk_set_led(led_idx, 1);
+}
+
+int dk_set_led_off(u8_t led_idx)
+{
+	return dk_set_led(led_idx, 0);
 }

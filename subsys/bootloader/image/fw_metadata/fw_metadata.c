@@ -14,7 +14,7 @@ extern const u32_t _flash_used;
 #endif
 
 const struct fw_firmware_info m_firmware_info
-__attribute__((section(".firmware_info")))
+_GENERIC_SECTION(.firmware_info)
 __attribute__((used)) = {
 	.magic = {FIRMWARE_INFO_MAGIC},
 	.firmware_size = (u32_t)&_flash_used,

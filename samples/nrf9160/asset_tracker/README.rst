@@ -1,20 +1,21 @@
-.. _nrf_cloud:
+.. _asset_tracker:
 
 nRF9160: Asset Tracker
 ######################
 
-The Asset Tracker sample demonstrates how to use the :ref:`lib_nrf_cloud` to connect an nRF9160 DK to the `nRF Cloud`_ via LTE and transmit GPS and device orientation data.
+The Asset Tracker sample demonstrates how to use the :ref:`lib_nrf_cloud` to connect an nRF9160 DK to the `nRF Cloud`_ via LTE and transmit GPS and sensor data.
 
 
 Overview
 ********
 
-The sample sends GPS position data and accelerometer data that is collected by an nRF9160 DK to Nordic Semiconductor's cloud solution, `nRF Cloud`_, where the data is visualized.
-The accelerometer data is used to infer the device's physical orientation.
-It is sent as the nRF Cloud sensor data type "FLIP".
+The sample sends GPS position, temperature, and accelerometer data that is collected by an nRF9160 DK to Nordic Semiconductor's cloud solution, `nRF Cloud`_, where the data is visualized.
+The accelerometer data is used to infer the device's physical orientation, which is sent as the nRF Cloud sensor data type "FLIP".
+Temperature data is sent as the nRF Cloud sensor type "TEMP".
 
-By default, the sample uses simulated sensor and GPS data.
+By default, the sample uses simulated sensor and GPS data, but it can be configured with Kconfig options to use real sensors to collect data.
 The LTE link control driver is used to establish the LTE link automatically.
+When the device is connected to the nRF Cloud, you can use the LTE Link Monitor to send AT commands and receive the response.
 
 
 Requirements
@@ -29,7 +30,7 @@ Requirements
   The sample is configured to compile and run as a non-secure application on nRF91's Cortex-M33.
   Therefore, it requires the :ref:`secure_boot` bootloader that prepares the required peripherals to be available for the application.
 
-.. _nrf_cloud_user_interface:
+.. _asset_tracker_user_interface:
 
 User interface
 **************
@@ -67,10 +68,14 @@ Building and running
 
 This sample can be found under :file:`samples/nrf9160/asset_tracker` in the |NCS| folder structure.
 
-The sample is built as a non-secure firmware image, thus with ``CONFIG_TRUSTED_EXECUTION_NONSECURE=y`` set in ``prj.conf``.
+The sample is built as a non-secure firmware image for the nrf9160_pca10090ns board.
 It can be programmed independently from the secure boot firmware.
 
 See :ref:`gs_programming` for information about how to build and program the application.
+The Kconfig file of the sample contains options to configure the sample.
+For example, configure ``CONFIG_POWER_OPTIMIZATION_ENABLE`` to enable power optimization or ``CONFIG_TEMP_USE_EXTERNAL`` to use an external temperature sensor instead of simulated temperature data.
+In |SES|, select **Project** > **Configure nRF Connect SDK project** to browse and configure these options.
+Alternatively, use the command line tool ``menuconfig`` or configure the options directly in ``prj.conf``.
 
 .. _power_opt:
 
@@ -101,7 +106,7 @@ After programming the :ref:`secure_boot` to your board, test the Asset Tracker s
 
 1. Connect the board to the computer using a USB cable.
    The board is assigned a COM port (Windows) or ttyACM device (Linux), which is visible in the Device Manager.
-#. Connect to the board with a terminal emulator.
+#. Connect to the board with a terminal emulator, for example, LTE Link Monitor.
 #. Open a web browser and navigate to https://nrfcloud.com/.
    Follow the instructions to set up your account and add an LTE device.
    A pattern of switch and button actions is displayed.
@@ -130,18 +135,19 @@ After programming the :ref:`secure_boot` to your board, test the Asset Tracker s
 #. Select the device from your device list on nRF Cloud, and observe that sensor data is received from the board.
 #. Toggle switch 1 to simulate flipping the board orientation.
 #. Set switch 2 in the position marked **N.C.** and observe that simulated GPS data is sent to the nRF Cloud.
+#. Optionally send AT commands from the terminal, and observe that the reponse is received.
 
 
 Dependencies
 ************
 
-This sample uses the following |NCS| libraries:
+This sample uses the following |NCS| libraries and drivers:
 
     * :ref:`lib_nrf_cloud`
-    * ``lib/gps_sim``
+    * ``drivers/gps_sim``
     * ``lib/bsd_lib``
-    * ``lib/sensor_sim``
-    * ``lib/dk_buttons_and_leds``
+    * ``drivers/sensor/sensor_sim``
+    * :ref:`dk_buttons_and_leds_readme`
     * ``drivers/lte_link_control``
 
 In addition, it uses the secure boot sample:
