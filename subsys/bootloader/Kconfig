@@ -15,7 +15,8 @@ if SECURE_BOOT
 config SB_S0_OFFSET
 	hex "Offset from B0 start to S0"
 	# TODO why can't we use the PARTITION_MANAGER_RESERVEDxx here?
-	default 0x4000 
+        # TODO use pm_config.h for this intead
+	default 0x4000
 
 config SB_S1_OFFSET
 	hex "Offset from B0 start to S1"
