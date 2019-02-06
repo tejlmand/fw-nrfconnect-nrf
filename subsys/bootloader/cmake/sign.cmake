@@ -10,11 +10,15 @@ set(hash_file firmware.sha256)
 set(signature_file firmware.signature)
 set(SIGNATURE_PUBLIC_KEY_FILE public.pem)
 
+# TODO add support for multiple linker passes
+set(kernel_elf ${IMAGE}kernel_elf)
+
 set(hashcmd
   ${PYTHON_EXECUTABLE}
   ${NRF_BOOTLOADER_SCRIPTS}/hash.py
-  --in ${PROJECT_BINARY_DIR}/${KERNEL_BIN_NAME}
+  --in ${PROJECT_BINARY_DIR}/${KERNEL_HEX_NAME}
   > ${hash_file}
+  DEPENDS ${kernel_elf}
   )
 
 if (CONFIG_SB_SIGNING_PYTHON)
@@ -91,6 +95,12 @@ if (CONFIG_SB_PRIVATE_KEY_PROVIDED)
     "Creating public key from private key used for signing"
     USES_TERMINAL
     )
+  add_custom_target(
+    signature_public_key_file_target
+    DEPENDS
+    ${SIGNATURE_PUBLIC_KEY_FILE}
+    )
+  set(SIGNATURE_PUBLIC_KEY_FILE_TARGET signature_public_key_file_target)
 endif()
 
 add_custom_command(
@@ -109,9 +119,10 @@ add_custom_command(
   DEPENDS
   ${sign_depends}
   ${signature_file}
-  ${SIGNATURE_PUBLIC_KEY_FILE}
+  ${SIGNATURE_PUBLIC_KEY_FILE_TARGET}
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
-  "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX_NAME}"
+  "Creating validation for ${PROJECT_BINARY_DIR}/${KERNEL_HEX_NAME},
+  storing to ${SIGNED_KERNEL_HEX}"
   USES_TERMINAL
   )

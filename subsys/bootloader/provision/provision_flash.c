@@ -18,7 +18,7 @@ typedef struct {
 } provision_flash_t;
 
 static const provision_flash_t *p_provision_data =
-	(provision_flash_t *)FLASH_AREA_PROVISION_OFFSET;
+	(provision_flash_t *)0xFF000;
 
 u32_t s0_address_read(void)
 {

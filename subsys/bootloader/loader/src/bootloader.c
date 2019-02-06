@@ -11,7 +11,6 @@
 #include <nrf.h>
 #include <errno.h>
 #include <generated_dts_board.h>
-#include <pm_config.h>
 #include "bl_crypto.h"
 #include "fw_metadata.h"
 
@@ -160,16 +159,16 @@ void main_bl(void)
 {
 #if CONFIG_SB_FLASH_PROTECT
 //TODO use proper defines
-	int err = fprotect_area(PM_CFG_B0_ADDRESS,
-			        PM_CFG_B0_SIZE);
+	int err = fprotect_area(0,
+			        0x8000);
 	if (err) {
 		printk("Protect B0 flash failed, cancel startup.\n\r");
 		return;
 	}
 
 #ifndef CONFIG_SOC_NRF9160
-	err = fprotect_area(FLASH_AREA_PROVISION_OFFSET,
-			FLASH_AREA_PROVISION_SIZE);
+	err = fprotect_area(0xFF000,
+			0x1000);
 	if (err) {
 		printk("Protect provision data failed, cancel startup.\n\r");
 		return;
