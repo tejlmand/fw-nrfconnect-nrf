@@ -85,6 +85,7 @@ if ("${CONFIG_SB_PUBLIC_KEY_FILES}" STREQUAL "")
     ${pubcmd}
     --in ${debug_private_key_1}
     --out ${debug_public_key_1}
+    DEPENDS kernel_elf
     WORKING_DIRECTORY ${APPLICATION_BINARY_DIR}
     COMMENT
     "Generating extra provision key files"
@@ -93,4 +94,5 @@ if ("${CONFIG_SB_PUBLIC_KEY_FILES}" STREQUAL "")
 else ()
   # TODO see if we can use some generator expression to avoid using 'kerne_elf' directly.
   set (PUBLIC_KEY_FILES ${CONFIG_SB_PUBLIC_KEY_FILES})
+  set (PROVISION_DEPENDS kernel_elf)
 endif()

@@ -15,8 +15,7 @@ if SECURE_BOOT
 config SB_S0_OFFSET
 	hex "Offset from B0 start to S0"
 	# TODO why can't we use the PARTITION_MANAGER_RESERVEDxx here?
-        # TODO use pm_config.h for this intead
-	default 0x4000
+	default 0x4000 
 
 config SB_S1_OFFSET
 	hex "Offset from B0 start to S1"
@@ -118,6 +117,12 @@ config PARTITION_MANAGER_RESERVED_SPACE_B0
 	  Flash space set aside for the secure bootloader. Note, the name
 	  of this configuration needs to match the requirements set by the
 	  script 'partition_manager.py'. See pm.yaml.
+
+config PARTITION_MANAGER_RESERVED_SPACE_PROVISION
+	hex "Flash space reserved for provision data."
+	default 0x1000
+	help
+	  Flash space set aside for the provision data.
 
 rsource "debug/Kconfig"
 
