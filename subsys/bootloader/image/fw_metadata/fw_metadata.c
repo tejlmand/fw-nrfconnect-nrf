@@ -24,6 +24,10 @@ const struct fw_abi_getter_info m_abi_getter = {
 
 __noinit struct fw_abi_getter_info abi_getter_in;
 
+#ifndef FIRMWARE_INFO_MAGIC
+#error "Missing FIRMWARE_INFO_MAGIC"
+#endif
+
 const struct fw_firmware_info m_firmware_info
 _GENERIC_SECTION(.firmware_info)
 __attribute__((used)) = {

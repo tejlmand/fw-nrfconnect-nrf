@@ -1,0 +1,4 @@
+b0:
+  placement: {before: [mcuboot, app]}
+provision:
+  placement: last

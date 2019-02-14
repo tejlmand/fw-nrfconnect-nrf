@@ -8,6 +8,7 @@
 import hashlib
 import sys
 import argparse
+from intelhex import IntelHex
 
 
 def parse_args():
@@ -15,15 +16,18 @@ def parse_args():
         description="Hash data from stdin or file.",
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("--infile", "-i", "--in", "-in", required=False,
-                        type=argparse.FileType('rb'), default=sys.stdin.buffer,
+    parser.add_argument("--infile", "-i", "--in", "-in", required=True,
                         help="Hash the contents of the specified file instead of stdin.")
-
-    args = parser.parse_args()
-
-    return args
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    sys.stdout.buffer.write(hashlib.sha256(args.infile.read()).digest())
+
+    if args.infile.endswith('.hex'):
+        ih = IntelHex()
+        ih.loadhex(args.infile)
+        to_hash = ih.tobinstr()
+    else:
+        to_hash = open(args.infile, 'rb').read()
+    sys.stdout.buffer.write(hashlib.sha256(to_hash).digest())

@@ -4,19 +4,26 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-menuconfig SECURE_BOOT
-	bool "Secure Boot"
-	select SECURE_BOOT_CRYPTO
-	select SB_FLASH_PROTECT
+config SECURE_BOOT
+# TODO boot - bootloader - really?
+	bool "Use Secure Boot"
+	depends on !IS_SECURE_BOOTLOADER
 	select SW_VECTOR_RELAY if SOC_SERIES_NRF51X
 
 if SECURE_BOOT
 
-config CUSTOM_DTS_OVERLAY_CMAKE_FILE
-	string
-	# We must use relative path from ZEPHYR_BASE here as the NRF_DIR
-	# variable is not yet available when this config is used.
-	default "${ZEPHYR_BASE}/../nrf/subsys/bootloader/dts/overlay.cmake"
+config SB_S0_OFFSET
+	hex "Offset from B0 start to S0"
+	# TODO why can't we use the PARTITION_MANAGER_RESERVEDxx here?
+	default 0x4000 
+
+config SB_S1_OFFSET
+	hex "Offset from B0 start to S1"
+	default 0x10000
+
+config SB_PROVISION_OFFSET
+	hex "Offset from B0 start to provision hex file"
+	default 0xFF000
 
 config SB_PRIVATE_KEY_PROVIDED
 	bool
@@ -91,14 +98,44 @@ config SB_PUBLIC_KEY_FILES
 	  will be used.
 	  Example value: ~/keys/pk1.pem,~/keys/pk2.pem,~/keys/pk3.pem
 
-rsource "debug/Kconfig"
 
-rsource "bl_crypto/Kconfig"
+endif # SECURE_BOOT
+
+menuconfig IS_SECURE_BOOTLOADER
+	bool "Current app is bootloader"
+	select SECURE_BOOT_CRYPTO
+	select SB_FLASH_PROTECT
+	depends on !KERNEL
+
+if IS_SECURE_BOOTLOADER
+
+config PARTITION_MANAGER_RESERVED_SPACE_B0
+	hex "Flash space reserved for bootloader."
+	default 0x8000 if SOC_NRF9160
+	default 0x4000
+	help
+	  Flash space set aside for the secure bootloader. Note, the name
+	  of this configuration needs to match the requirements set by the
+	  script 'partition_manager.py'. See pm.yaml.
+
+config PARTITION_MANAGER_RESERVED_SPACE_PROVISION
+	hex "Flash space reserved for provision data."
+	default 0x1000
+	help
+	  Flash space set aside for the provision data.
+
+rsource "debug/Kconfig"
 
 rsource "c_runtime_setup/Kconfig"
 
-rsource "fw_metadata/Kconfig"
-
 rsource "fprotect/Kconfig"
 
-endif # SECURE_BOOT
+endif # IS_SECURE_BOOTLOADER
+
+if IS_SECURE_BOOTLOADER || SECURE_BOOT
+rsource "bl_crypto/Kconfig"
+
+rsource "image/fw_metadata/Kconfig"
+endif # IS_SECURE_BOOTLOADER || SECURE_BOOT
+
+if ZTEST && !IS_SECURE_BOOTLOADER

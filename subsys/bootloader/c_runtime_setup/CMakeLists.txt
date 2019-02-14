@@ -9,111 +9,77 @@ set(CORTEX_M ${ARM}/cortex_m)
 set(EXTS ${ZEPHYR_BASE}/ext)
 set(HAL ${EXTS}/hal)
 
-add_library(c_runtime_setup STATIC ${ZEPHYR_BASE}/misc/empty_file.c)
-target_link_libraries(c_runtime_setup PRIVATE zephyr_interface)
-# Make sure every generated file is present before trying to build the
-# library.
-target_link_libraries(c_runtime_setup PRIVATE bootloader)
+zephyr_library()
 
-# Set start symbol of MDK to point to the main_bl function
-if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK)
+zephyr_library_sources_ifdef(
+  CONFIG_CPU_CORTEX_M0
+  ${ARM}/irq_relay.S
+)
+
+if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_CUSTOM)
+  zephyr_library_sources(startup.c)
+elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
+  # TODO Use zephyr build code for this directly?
+  zephyr_library_sources(
+      ${CORTEX_M}/prep_c.c
+      ${CORTEX_M}/reset.S
+      ${ARM}/irq_init.c
+      ${ARM}/exc_exit.S
+      ${CORTEX_M}/vector_table.S
+      ${ZEPHYR_BASE}/drivers/timer/cortex_m_systick.c
+      zephyr_dummy_interrupt_handlers.c
+    )
+   zephyr_library_link_libraries(${IMAGE}kernel_init)
+elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK)
+  # Set start symbol of MDK to point to the main_bl function
   add_definitions(-D__START=main_bl)
   add_definitions(-D__STARTUP_CLEAR_BSS)
+else()
+  assert(0 "Unreachable code")
 endif()
 
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_CUSTOM
-  c_runtime_setup
-  PRIVATE
-  startup.c
-  )
-
-target_sources_ifdef(CONFIG_CPU_CORTEX_M0
-  c_runtime_setup
-  PUBLIC
-  ${ARM}/irq_relay.S
-  )
-
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR
-  c_runtime_setup
-  PRIVATE
-  ${CORTEX_M}/prep_c.c
-  ${CORTEX_M}/reset.S
-  ${ARM}/irq_init.c
-  ${CORTEX_M}/vector_table.S
-  zephyr_dummy_interrupt_handlers.c
-  )
-
-target_include_directories_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR
-  c_runtime_setup
-  PRIVATE
-  ${CORTEX_M}
-  ${CORTEX_M}/mpu
-  ${ZEPHYR_BASE}/include
-  ${ARM_INC}/include/cortex_m
-  )
-
-if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
-  add_library(kernel_init STATIC ${ZEPHYR_BASE}/kernel/init.c)
-  target_link_libraries(kernel_init zephyr_interface)
-  target_compile_definitions(kernel_init PRIVATE _Cstart=UNUSED_Cstart)
-  add_dependencies(kernel_init offsets_h)
-  target_link_libraries(c_runtime_setup PRIVATE kernel_init)
-endif()
 
 # Nordic specific for startup code
 if(CONFIG_SOC_SERIES_NRF51X)
-target_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-  c_runtime_setup
-  PRIVATE
-  ${HAL}/nordic/nrfx/mdk/system_nrf51.c
+  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
+    ${HAL}/nordic/nrfx/mdk/system_nrf51.c
   )
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
-  c_runtime_setup
-  PRIVATE
-  gcc_startup_nrf51.S
+  zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
+    gcc_startup_nrf51.S
   )
 elseif(CONFIG_SOC_NRF52810)
-target_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-  c_runtime_setup
-  PRIVATE
-  ${HAL}/nordic/nrfx/mdk/system_nrf52810.c
+  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
+    ${HAL}/nordic/nrfx/mdk/system_nrf52810.c
   )
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
-  c_runtime_setup
-  PRIVATE
-  gcc_startup_nrf52810.S
+  zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
+    gcc_startup_nrf52810.S
   )
 elseif(CONFIG_SOC_NRF52832)
-target_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-  c_runtime_setup
-  PRIVATE
-  ${HAL}/nordic/nrfx/mdk/system_nrf52.c
+  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
+    ${HAL}/nordic/nrfx/mdk/system_nrf52.c
   )
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
-  c_runtime_setup
-  PRIVATE
-  gcc_startup_nrf52.S
+  zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
+    gcc_startup_nrf52.S
   )
 elseif(CONFIG_SOC_NRF52840)
-target_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-  c_runtime_setup
-  PRIVATE
-  ${HAL}/nordic/nrfx/mdk/system_nrf52840.c
+  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
+    ${HAL}/nordic/nrfx/mdk/system_nrf52840.c
   )
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
-  c_runtime_setup
-  PRIVATE
-  gcc_startup_nrf52840.S
+  zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
+    gcc_startup_nrf52840.S
   )
 elseif(CONFIG_SOC_NRF9160)
-target_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
-  c_runtime_setup
-  PRIVATE
-  ${HAL}/nordic/nrfx/mdk/system_nrf9160.c
+  zephyr_library_sources_ifdef(CONFIG_SB_VENDOR_SYSTEM_INIT
+    ${HAL}/nordic/nrfx/mdk/system_nrf9160.c
   )
-target_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
-  c_runtime_setup
-  PRIVATE
-  gcc_startup_nrf9160.S
+  zephyr_library_sources_ifdef(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_MDK
+    gcc_startup_nrf9160.S
   )
+endif()
+
+if(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
+  zephyr_library_named(kernel_init)
+  zephyr_library_sources(${ZEPHYR_BASE}/kernel/init.c)
+  zephyr_library_compile_definitions(_Cstart=UNUSED_Cstart)
+  add_dependencies(${IMAGE}kernel_init ${IMAGE}offsets_h)
 endif()

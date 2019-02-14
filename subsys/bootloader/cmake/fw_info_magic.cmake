@@ -1,9 +1,3 @@
-#
-# Copyright (c) 2018 Nordic Semiconductor ASA
-#
-# SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
-#
-
 # This file creates variables with the magic numbers used for firmware metadata
 # as comma-separated lists of numbers.
 
@@ -21,3 +15,11 @@ set(VALIDATION_INFO_MAGIC "${CONFIG_SB_MAGIC_COMMON},${CONFIG_SB_MAGIC_VALIDATIO
 
 set(ABI_GETTER_INFO_MAGIC "${CONFIG_SB_MAGIC_COMMON},${CONFIG_SB_MAGIC_ABI_GETTER_INFO},${CONFIG_SB_ABI_INFO_VERSION}")
 set(ABI_INFO_MAGIC        "${CONFIG_SB_MAGIC_COMMON},${CONFIG_SB_MAGIC_ABI_INFO},${${CONFIG_SB_ABI_INFO_VERSION}}")
+zephyr_compile_definitions(
+  FIRMWARE_INFO_MAGIC=${FIRMWARE_INFO_MAGIC}
+  POINTER_MAGIC=${POINTER_MAGIC}
+  VALIDATION_INFO_MAGIC=${VALIDATION_INFO_MAGIC}
+  ABI_GETTER_INFO_MAGIC=${ABI_GETTER_INFO_MAGIC}
+  ABI_INFO_MAGIC=${ABI_INFO_MAGIC}
+  )
+

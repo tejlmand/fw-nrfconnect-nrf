@@ -10,7 +10,6 @@ menuconfig SECURE_BOOT_CRYPTO
 	help
 	  Only meant to be enabled separately from SECURE_BOOT when testing.
 
-if (SECURE_BOOT_CRYPTO)
 config SB_ECDSA
 	bool
 config SB_RSA
@@ -97,4 +96,3 @@ config SB_PUBLIC_KEY_HASH_LEN
 	  The length to which public key hashes in the list of Root of Trust
 	  Public Keys are truncated.
 
-endif # SECURE_BOOT_CRYPTO
