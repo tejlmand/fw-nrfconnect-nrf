@@ -24,7 +24,9 @@ elseif(CONFIG_SB_C_RUNTIME_SETUP_VARIANT_ZEPHYR)
       ${CORTEX_M}/prep_c.c
       ${CORTEX_M}/reset.S
       ${ARM}/irq_init.c
+      ${ARM}/exc_exit.S
       ${CORTEX_M}/vector_table.S
+      ${ZEPHYR_BASE}/drivers/timer/cortex_m_systick.c
       zephyr_dummy_interrupt_handlers.c
     )
    zephyr_library_link_libraries(${IMAGE}kernel_init)
