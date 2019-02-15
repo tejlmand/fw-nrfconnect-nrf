@@ -1,6 +1,6 @@
-add_subdirectory(bl_crypto)
 add_subdirectory(c_runtime_setup)
 add_subdirectory(provision)
+add_subdirectory(image/fw_metadata)
 
 set_property(
   GLOBAL APPEND PROPERTY

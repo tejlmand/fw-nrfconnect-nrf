@@ -1,5 +1,7 @@
 zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/../include)
 add_subdirectory(fw_metadata)
+#TODO: Check if CONFIG_SHARED_CRYPTO is set
+add_subdirectory(bl_crypto_client)
 set(NRF_BOOTLOADER_SCRIPTS ${NRF_DIR}/scripts/bootloader)
 set(PROVISION_HEX_NAME     provision_data.hex)
 set(PROVISION_HEX          ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME})

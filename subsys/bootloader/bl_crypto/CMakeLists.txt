@@ -32,7 +32,6 @@ else()
   message(FATAL_ERROR "No hash implementation chosen for bootloader.")
 endif()
 set(NRFXLIB_BASE ${ZEPHYR_BASE}/../nrfxlib)
-zephyr_sources(bl_crypto_client.c)
 zephyr_include_directories(.)
 #TODO: Move this out of this Cmake File? or find a better PATH variable
 zephyr_include_directories(${NRFXLIB_BASE}/crypto/nrf_oberon/include)

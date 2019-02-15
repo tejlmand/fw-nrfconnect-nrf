@@ -9,16 +9,6 @@
 #include <fw_metadata.h>
 
 extern struct fw_abi_getter_info abi_getter_in;
-void print_header(struct bl_crypto_abi * obj){
-	printk("====HEADER====\n\r");
-	for (u32_t i = 0; i < 3; i++) {
-		printk("Magic values: 0x%x\n\r", obj->header.magic[i]);
-	}	
-	printk("Flags: %d and version: %d\n\r", obj->header.abi_flags, 	obj->header.abi_version);
-	printk("ABI_id: 0x%x\n\r", obj->header.abi_id);
-	printk("ABI len: %d\n\r", obj->header.abi_len);
-} 
-
 
 int crypto_root_of_trust(const u8_t *pk, const u8_t *pk_hash,
 			 const u8_t *sig, const u8_t *fw,
