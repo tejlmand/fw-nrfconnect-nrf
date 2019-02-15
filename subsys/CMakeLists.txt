@@ -14,6 +14,10 @@ add_subdirectory_ifdef(CONFIG_SECURE_BOOT bootloader/loader)
 
 add_subdirectory_ifdef(CONFIG_SECURE_BOOT bootloader/image)
 
+if(CONFIG_HAS_HW_NRF_SPU)
+	add_subdirectory_ifdef(CONFIG_SPU_SETUP spu_setup)
+endif()
+
 add_subdirectory(net)
 add_subdirectory_ifdef(CONFIG_NRF_ESB		enhanced_shockburst)
 add_subdirectory_ifdef(CONFIG_EVENT_MANAGER	event_manager)

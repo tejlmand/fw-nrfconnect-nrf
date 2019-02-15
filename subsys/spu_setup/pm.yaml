@@ -1,0 +1,2 @@
+spu_setup:
+  placement: {before: [app]}
