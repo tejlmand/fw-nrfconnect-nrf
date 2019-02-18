@@ -1,26 +1,15 @@
-config SPU_SETUP
+config SPU_SETUP 
 	bool "SPU Setup"
-	default y
+	default n #TODO: Smart way of enablign spu based on properties
 	depends on HAS_HW_NRF_SPU
 	depends on !IS_SPU_SETUP
 	help
 	  Enable SPU configuration for nRF91
-	  
 
-menuconfig IS_SPU_SETUP
-	bool "Current app is SPU setup"
-	#TODO: Build without zephyr kernel
-	#depends on !KERNEL
-	bool
-
-if IS_SPU_SETUP
-
-config PARTITION_MANAGER_RESERVED_SPU_CONFIGURATION
+config PARTITION_MANAGER_RESERVED_SPACE_SPU_SETUP
 	hex "Flash space reserved for bootloader."
 	default 0x4000
 	help
 	  Flash space set aside for the SPU configuration. Note, the name
 	  of this configuration needs to match the requirements set by the
 	  script 'partition_manager.py'. See pm.yaml.
-
-endif
