@@ -152,6 +152,7 @@ static void secure_boot_config_flash(void)
 	}
 }
 
+#if 0
 static inline void setup_sram_section(uint8_t first, uint8_t last, bool secure)
 {
 	for (int i = first; i <= last; i++) {
@@ -179,6 +180,7 @@ static inline void setup_sram_section(uint8_t first, uint8_t last, bool secure)
 				& SPU_RAMREGION_PERM_LOCK_Msk);
 	}
 }
+#endif
 
 static void secure_boot_config_sram(void)
 {
@@ -337,8 +339,9 @@ static void secure_boot_config_peripherals(void)
 	secure_boot_config_peripheral(
 		NRFX_PERIPHERAL_ID_GET(NRF_UARTE1), 0);
 	/* Configure UARTE2 as Non-Secure */
+	/*
 	secure_boot_config_peripheral(
-		NRFX_PERIPHERAL_ID_GET(NRF_UARTE2), 0);
+		NRFX_PERIPHERAL_ID_GET(NRF_UARTE2), 0);*/
 	/* Configure EGU1 as Non-Secure */
 	secure_boot_config_peripheral(
 		NRFX_PERIPHERAL_ID_GET(NRF_EGU1_S), 0);
