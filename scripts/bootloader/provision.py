@@ -35,14 +35,22 @@ def generate_provision_hex_file(s0_address, s1_address, hashes, provision_addres
 # Since cmake does not have access to DTS variables, fetch them manually.
 def find_provision_memory_section(config_files):
     adr = dict()
+    mcuboot_size = 0
     for lf in config_files:
         for line in lf.readlines():
             match = re.match('^#define CONFIG_SB_(\w*)_OFFSET 0x([0-9a-fA-F]*)', line)
             if match:
                 adr[match.group(1).lower()] = int(match.group(2), 16)
+            match = re.match('^#define CONFIG_PARTITION_MANAGER_RESERVED_SPACE_B0 0x([0-9a-fA-F]*)', line)
+            if match:
+                adr['s0'] = int(match.group(1), 16)
+            match = re.match('^#define CONFIG_PARTITION_MANAGER_RESERVED_SPACE_MCUBOOT 0x([0-9a-fA-F]*)', line)
+            if match:
+                mcuboot_size = int(match.group(1), 16)
 
+    adr['s1'] = adr['s0'] + mcuboot_size
     if 's0' not in adr.keys() or 's1' not in adr.keys() or 'provision' not in adr.keys():
-        raise RuntimeError("Could not find value for one of S0, S1 or provision address.")
+        raise RuntimeError("Could not find value for one of S0, S1 or provision address - {}".format(adr))
 
     return adr['s0'], adr['s1'], adr['provision']
 

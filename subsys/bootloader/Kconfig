@@ -12,15 +12,6 @@ config SECURE_BOOT
 
 if SECURE_BOOT
 
-config SB_S0_OFFSET
-	hex "Offset from B0 start to S0"
-	# TODO why can't we use the PARTITION_MANAGER_RESERVEDxx here?
-	default 0x4000 
-
-config SB_S1_OFFSET
-	hex "Offset from B0 start to S1"
-	default 0x10000
-
 config SB_PROVISION_OFFSET
 	hex "Offset from B0 start to provision hex file"
 	default 0xFF000

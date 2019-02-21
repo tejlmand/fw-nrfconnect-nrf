@@ -207,7 +207,7 @@ void main_bl(void)
 	int err = fprotect_area(PM_CFG_B0_ADDRESS,
 			        PM_CFG_B0_SIZE);
 	if (err) {
-		//printk("Protect B0 flash failed, cancel startup.\n\r");
+		printk("Protect B0 flash failed, cancel startup.\n\r");
 		return;
 	}
 
@@ -215,7 +215,7 @@ void main_bl(void)
 	err = fprotect_area(PM_CFG_PROVISION_ADDRESS,
 			PM_CFG_PROVISION_SIZE);
 	if (err) {
-		//printk("Protect provision data failed, cancel startup.\n\r");
+		printk("Protect provision data failed, cancel startup.\n\r");
 		return;
 	}
 #endif /* CONFIG_SOC_NRF9160 */
