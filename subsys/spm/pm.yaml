@@ -1,2 +1,2 @@
-spu_setup:
+secure_partition:
   placement: {before: [app]}

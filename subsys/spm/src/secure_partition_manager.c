@@ -61,18 +61,19 @@
 #include <cortex_m/tz.h>
 
 #include <nrfx.h>
+#include <pm_config.h>
 
 extern void irq_target_state_set(unsigned int irq, int secure_state);
 extern int irq_target_state_is_secure(unsigned int irq);
 
 #define SECURE_FLASH_REGION_FIRST    0
-#define SECURE_FLASH_REGION_LAST     7
-#define NONSECURE_FLASH_REGION_FIRST 8
+#define SECURE_FLASH_REGION_LAST     0 
+#define NONSECURE_FLASH_REGION_FIRST 4 
 #define NONSECURE_FLASH_REGION_LAST  31
 
 #define SECURE_SRAM_REGION_FIRST     0
 #define SECURE_SRAM_REGION_LAST      7
-#define NONSECURE_SRAM_REGION_FIRST  8
+#define NONSECURE_SRAM_REGION_FIRST  0 
 #define NONSECURE_SRAM_REGION_LAST   31
 
 /* Local convenience macro to extract the peripheral
@@ -95,7 +96,6 @@ static void secure_boot_config_flash(void)
 	/* Configuration for Regions 0 - 7 (0 - 256 kB):
 	 * Read/Write/Execute: Yes
 	 * Secure: Yes
-	 */
 	for (i = SECURE_FLASH_REGION_FIRST;
 		i <= SECURE_FLASH_REGION_LAST; i++) {
 		NRF_SPU->FLASHREGION[i].PERM =
@@ -120,6 +120,7 @@ static void secure_boot_config_flash(void)
 				& SPU_FLASHREGION_PERM_LOCK_Msk);
 		printk("Secure Boot: SPU: set region %u as Secure\n", i);
 	}
+	 */
 
 	/* Configuration for Regions 8 - 31 (256 kB - 1 MB):
 	 * Read/Write/Execute: Yes
@@ -196,6 +197,7 @@ static void secure_boot_config_sram(void)
 	 * Read/Write/Execute: Yes
 	 * Secure: Yes
 	 */
+	/*
 	for (i = SECURE_SRAM_REGION_FIRST;
 		i <= SECURE_SRAM_REGION_LAST; i++) {
 		NRF_SPU->RAMREGION[i].PERM =
@@ -221,7 +223,7 @@ static void secure_boot_config_sram(void)
 
 		printk("Secure Boot: SPU: set SRAM region %u as Secure\n", i);
 	}
-
+    */
 	/* Configuration for Regions 8 - 31 (64 kB - 256 kB):
 	 * Read/Write/Execute: Yes
 	 * Secure: No
@@ -401,14 +403,20 @@ static void secure_boot_jump(void)
 	/* Extract initial MSP of the Non-Secure firmware image.
 	 * The assumption is that the MSP is located at VTOR_NS[0].
 	 */
-	u32_t *vtor_ns = (u32_t *)DT_FLASH_AREA_IMAGE_0_NONSECURE_OFFSET_0;
+	u32_t *vtor_test = (u32_t *) PM_CFG_APP_ADDRESS;
+	u32_t *vtor_ns = (u32_t *) DT_FLASH_AREA_IMAGE_0_NONSECURE_OFFSET_0;
 
 	printk("Secure Boot: MSP_NS %x\n", vtor_ns[0]);
+	printk("Secure Boot: MSP_NS %x\n", vtor_ns);
+	printk("Secure Boot: MSP_NS2 %x\n", vtor_test[0]);
+	printk("Secure Boot: MSP_NS2 %x\n", vtor_test);
+	printk("Secure Boot: MSP_NSCFG %x\n", PM_CFG_APP_ADDRESS);
+
 
 	/* Configure Non-Secure stack */
 	tz_nonsecure_setup_conf_t secure_boot_ns_conf = {
-		.vtor_ns = (u32_t)vtor_ns,
-		.msp_ns = vtor_ns[0],
+		.vtor_ns = (u32_t)vtor_test,
+		.msp_ns = vtor_test[0],
 		.psp_ns = 0,
 		.control_ns.npriv = 0, /* Privileged mode*/
 		.control_ns.spsel = 0 /* Use MSP in Thread mode */
@@ -418,7 +426,9 @@ static void secure_boot_jump(void)
 
 	/* Generate function pointer for Non-Secure function call. */
 	TZ_NONSECURE_FUNC_PTR_DECLARE(reset_ns);
-	reset_ns = TZ_NONSECURE_FUNC_PTR_CREATE(vtor_ns[1]);
+	reset_ns = TZ_NONSECURE_FUNC_PTR_CREATE(vtor_test[1]);
+		printk("Secure Boot: pointer type: 0x%x\n",
+			(u32_t)reset_ns);
 
 	if (TZ_NONSECURE_FUNC_PTR_IS_NS(reset_ns)) {
 		printk("Secure Boot: prepare to jump to Non-Secure image\n");

@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.8.2)
 
-zephyr_add_executable(spu_setup)
+zephyr_add_executable(secure_partition)
 
 include($ENV{ZEPHYR_BASE}/cmake/app/boilerplate.cmake NO_POLICY_SCOPE)
-project(spu_setup)
+project(secure_partition)
 
-target_sources(${IMAGE}app PRIVATE src/spu_setup.c)
+target_sources(${IMAGE}app PRIVATE src/secure_partition_manager.c)
 
 set_property(
   GLOBAL APPEND PROPERTY

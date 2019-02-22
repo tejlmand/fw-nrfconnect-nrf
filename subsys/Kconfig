@@ -19,4 +19,4 @@ rsource "event_manager/Kconfig"
 
 rsource "profiler/Kconfig"
 
-rsource "spu_setup/Kconfig.spu"
+rsource "spm/Kconfig.spm"

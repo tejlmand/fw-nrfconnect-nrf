@@ -1,12 +1,12 @@
-config SPU_SETUP 
-	bool "SPU Setup"
+config SECURE_PARTITION 
+	bool "Secure parititon"
 	default n #TODO: Smart way of enablign spu based on properties
 	depends on HAS_HW_NRF_SPU
 	depends on !IS_SPU_SETUP
 	help
-	  Enable SPU configuration for nRF91
+	  Enable SPU partition configuration for nRF91
 
-config PARTITION_MANAGER_RESERVED_SPACE_SPU_SETUP
+config PARTITION_MANAGER_RESERVED_SPACE_SECURE_PARTITION
 	hex "Flash space reserved for bootloader."
 	default 0x4000
 	help
