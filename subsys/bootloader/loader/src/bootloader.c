@@ -20,7 +20,7 @@
 #endif
 
 #include <provision.h>
-
+#define B0_PREFIX "<bootloader>: "
 /* These __weak functions are needed by the cc310_bl and some other code, but
  * not (always) included in the bootloader.
  */
@@ -59,10 +59,10 @@ static bool verify_firmware(u32_t address)
 
 	fw_info = firmware_info_get(address);
 
-	printk("Attempting to boot from address 0x%x.\n\r", address);
+	printk(B0_PREFIX"Attempting to boot from address 0x%x.\n\r", address);
 
 	if (!fw_info) {
-		printk("%s\n\r", "Could not find valid firmware info inside "
+		printk(B0_PREFIX"%s\n\r", "Could not find valid firmware info inside "
 				    "firmware. Aborting boot!");
 		return false;
 	}
@@ -70,7 +70,7 @@ static bool verify_firmware(u32_t address)
 	fw_ver_info = validation_info_find(fw_info, 4);
 
 	if (!fw_ver_info) {
-		printk("%s\n\r",
+		printk(B0_PREFIX"%s\n\r",
 			    "Could not find valid firmware validation "
 			    "info trailing firmware. Aborting boot!\n\r");
 		return false;
@@ -78,7 +78,7 @@ static bool verify_firmware(u32_t address)
 
 	err = crypto_init();
 	if (err) {
-		printk("crypto_init() returned %d. Aborting boot!\n\r", err);
+		printk(B0_PREFIX"crypto_init() returned %d. Aborting boot!\n\r", err);
 		return false;
 	}
 
@@ -102,7 +102,7 @@ static bool verify_firmware(u32_t address)
 	}
 
 	if (retval != 0) {
-		printk("Firmware validation failed with error %d. "
+		printk(B0_PREFIX"Firmware validation failed with error %d. "
 			    "Aborting boot!\n\r",
 			    retval);
 		return false;
@@ -207,7 +207,7 @@ void main_bl(void)
 	int err = fprotect_area(PM_CFG_B0_ADDRESS,
 			        PM_CFG_B0_SIZE);
 	if (err) {
-		printk("Protect B0 flash failed, cancel startup.\n\r");
+		printk(B0_PREFIX"Protect B0 flash failed, cancel startup.\n\r");
 		return;
 	}
 
@@ -215,7 +215,7 @@ void main_bl(void)
 	err = fprotect_area(PM_CFG_PROVISION_ADDRESS,
 			PM_CFG_PROVISION_SIZE);
 	if (err) {
-		printk("Protect provision data failed, cancel startup.\n\r");
+		printk(B0_PREFIX"Protect provision data failed, cancel startup.\n\r");
 		return;
 	}
 #endif /* CONFIG_SOC_NRF9160 */

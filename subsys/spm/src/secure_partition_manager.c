@@ -63,12 +63,15 @@
 #include <nrfx.h>
 #include <pm_config.h>
 
+#define SPM_PREFIX "<secure partition manager>: "
+
 extern void irq_target_state_set(unsigned int irq, int secure_state);
 extern int irq_target_state_is_secure(unsigned int irq);
 
+//TODO: Configure this with regards to where SPU is placed and app is placed
 #define SECURE_FLASH_REGION_FIRST    0
 #define SECURE_FLASH_REGION_LAST     0 
-#define NONSECURE_FLASH_REGION_FIRST 4 
+#define NONSECURE_FLASH_REGION_FIRST 3 
 #define NONSECURE_FLASH_REGION_LAST  31
 
 #define SECURE_SRAM_REGION_FIRST     0
@@ -91,41 +94,9 @@ static void secure_boot_config_flash(void)
 	 * allocated to Non-Secure firmware image, thus SPU attributes
 	 * it as Non-Secure.
 	 */
-	printk("Secure Boot: configure flash\n");
-
-	/* Configuration for Regions 0 - 7 (0 - 256 kB):
-	 * Read/Write/Execute: Yes
-	 * Secure: Yes
-	for (i = SECURE_FLASH_REGION_FIRST;
-		i <= SECURE_FLASH_REGION_LAST; i++) {
-		NRF_SPU->FLASHREGION[i].PERM =
-			((SPU_FLASHREGION_PERM_EXECUTE_Enable <<
-					SPU_FLASHREGION_PERM_EXECUTE_Pos)
-				& SPU_FLASHREGION_PERM_EXECUTE_Msk)
-			|
-			((SPU_FLASHREGION_PERM_WRITE_Enable <<
-					SPU_FLASHREGION_PERM_WRITE_Pos)
-				& SPU_FLASHREGION_PERM_WRITE_Msk)
-			|
-			((SPU_FLASHREGION_PERM_READ_Enable <<
-					SPU_FLASHREGION_PERM_READ_Pos)
-				& SPU_FLASHREGION_PERM_READ_Msk)
-			|
-			((SPU_FLASHREGION_PERM_SECATTR_Secure <<
-					SPU_FLASHREGION_PERM_SECATTR_Pos)
-				& SPU_FLASHREGION_PERM_SECATTR_Msk)
-			|
-			((SPU_FLASHREGION_PERM_LOCK_Locked <<
-					SPU_FLASHREGION_PERM_LOCK_Pos)
-				& SPU_FLASHREGION_PERM_LOCK_Msk);
-		printk("Secure Boot: SPU: set region %u as Secure\n", i);
-	}
-	 */
-
-	/* Configuration for Regions 8 - 31 (256 kB - 1 MB):
-	 * Read/Write/Execute: Yes
-	 * Secure: No
-	 */
+	printk(SPM_PREFIX"Secure Boot: configure flash\n");
+	printk(SPM_PREFIX"Secure Boot: SPU: set Flash region %u to %u as Non-Secure\n",
+			NONSECURE_FLASH_REGION_FIRST, NONSECURE_FLASH_REGION_LAST);
 	for (i = NONSECURE_FLASH_REGION_FIRST;
 		i <= NONSECURE_FLASH_REGION_LAST; i++) {
 		NRF_SPU->FLASHREGION[i].PERM =
@@ -148,8 +119,6 @@ static void secure_boot_config_flash(void)
 			((SPU_FLASHREGION_PERM_LOCK_Locked <<
 					SPU_FLASHREGION_PERM_LOCK_Pos)
 				& SPU_FLASHREGION_PERM_LOCK_Msk);
-		printk("Secure Boot: SPU: set Flash region %u as Non-Secure\n",
-			i);
 	}
 }
 
@@ -191,7 +160,7 @@ static void secure_boot_config_sram(void)
 	 * The rest of SRAM is allocated to Non-Secure firmware image, thus
 	 * SPU attributes it as Non-Secure.
 	 */
-	printk("Secure Boot: configure SRAM\n");
+	printk(SPM_PREFIX"Secure Boot: configure SRAM\n");
 
 	/* Configuration for Regions 0 - 7 (0 - 64 kB):
 	 * Read/Write/Execute: Yes
@@ -221,13 +190,15 @@ static void secure_boot_config_sram(void)
 					SPU_RAMREGION_PERM_LOCK_Pos)
 				& SPU_RAMREGION_PERM_LOCK_Msk);
 
-		printk("Secure Boot: SPU: set SRAM region %u as Secure\n", i);
+		printk(SPM_PREFIX"Secure Boot: SPU: set SRAM region %u as Secure\n", i);
 	}
     */
 	/* Configuration for Regions 8 - 31 (64 kB - 256 kB):
 	 * Read/Write/Execute: Yes
 	 * Secure: No
 	 */
+	printk(SPM_PREFIX"Secure Boot: SPU: set SRAM region %u to %u as Non-Secure\n",
+	NONSECURE_SRAM_REGION_FIRST, NONSECURE_SRAM_REGION_LAST);
 	for (i = NONSECURE_SRAM_REGION_FIRST;
 		i <= NONSECURE_SRAM_REGION_LAST; i++) {
 		NRF_SPU->RAMREGION[i].PERM =
@@ -251,8 +222,6 @@ static void secure_boot_config_sram(void)
 					SPU_RAMREGION_PERM_LOCK_Pos)
 				& SPU_RAMREGION_PERM_LOCK_Msk);
 
-		printk("Secure Boot: SPU: set SRAM region %u as Non-Secure\n",
-			i);
 	}
 }
 
@@ -311,7 +280,7 @@ static void secure_boot_config_peripherals(void)
 	 *   the Non-Secure domain.
 	 * - All GPIOs are allocated to the Non-Secure domain.
 	 */
-	printk("Secure Boot: configure peripherals\n");
+	printk(SPM_PREFIX"Secure Boot: configure peripherals\n");
 
 	/* Configure GPIO pins to be non-Secure */
 	NRF_SPU->GPIOPORT[0].PERM = 0;
@@ -403,20 +372,12 @@ static void secure_boot_jump(void)
 	/* Extract initial MSP of the Non-Secure firmware image.
 	 * The assumption is that the MSP is located at VTOR_NS[0].
 	 */
-	u32_t *vtor_test = (u32_t *) PM_CFG_APP_ADDRESS;
-	u32_t *vtor_ns = (u32_t *) DT_FLASH_AREA_IMAGE_0_NONSECURE_OFFSET_0;
-
-	printk("Secure Boot: MSP_NS %x\n", vtor_ns[0]);
-	printk("Secure Boot: MSP_NS %x\n", vtor_ns);
-	printk("Secure Boot: MSP_NS2 %x\n", vtor_test[0]);
-	printk("Secure Boot: MSP_NS2 %x\n", vtor_test);
-	printk("Secure Boot: MSP_NSCFG %x\n", PM_CFG_APP_ADDRESS);
-
+	u32_t *vtor_ns = (u32_t *) PM_CFG_APP_ADDRESS;
 
 	/* Configure Non-Secure stack */
 	tz_nonsecure_setup_conf_t secure_boot_ns_conf = {
-		.vtor_ns = (u32_t)vtor_test,
-		.msp_ns = vtor_test[0],
+		.vtor_ns = (u32_t)vtor_ns,
+		.msp_ns = vtor_ns[0],
 		.psp_ns = 0,
 		.control_ns.npriv = 0, /* Privileged mode*/
 		.control_ns.spsel = 0 /* Use MSP in Thread mode */
@@ -426,12 +387,9 @@ static void secure_boot_jump(void)
 
 	/* Generate function pointer for Non-Secure function call. */
 	TZ_NONSECURE_FUNC_PTR_DECLARE(reset_ns);
-	reset_ns = TZ_NONSECURE_FUNC_PTR_CREATE(vtor_test[1]);
-		printk("Secure Boot: pointer type: 0x%x\n",
-			(u32_t)reset_ns);
-
+	reset_ns = TZ_NONSECURE_FUNC_PTR_CREATE(vtor_ns[1]);
 	if (TZ_NONSECURE_FUNC_PTR_IS_NS(reset_ns)) {
-		printk("Secure Boot: prepare to jump to Non-Secure image\n");
+		printk(SPM_PREFIX"Secure Boot: prepare to jump to Non-Secure image at: 0x%x\n",vtor_ns);
 
 		/* Note: Move UARTE0 before jumping, if it is
 		 * to be used on the Non-Secure domain.
@@ -450,7 +408,7 @@ static void secure_boot_jump(void)
 		CODE_UNREACHABLE;
 
 	} else {
-		printk("Secure Boot: wrong pointer type: 0x%x\n",
+		printk(SPM_PREFIX"Secure Boot: wrong pointer type: 0x%x\n",
 			(u32_t)reset_ns);
 	}
 }
