@@ -27,6 +27,12 @@ manifest:
       # nRF Connect SDK base URL.
     - name: ncs
       url-base: https://github.com/NordicPlayground
+    - name: haam
+      url-base: https://github.com/hakonfam
+    - name: siho
+      url-base: https://github.com/sigvartmh
+    - name: os
+      url-base: https://github.com/osaether
 
   # The list of external projects for the nRF Connect SDK.
   #
@@ -34,13 +40,16 @@ manifest:
     - name: fw-nrfconnect-zephyr
       path: zephyr
       west-commands: scripts/west-commands.yml
-      revision: a9d9dc78760a7751576987401fde7263eaa6c094
-    - name: fw-nrfconnect-mcuboot
+      remote: haam
+      revision: multi_image_spu
+    - name: fw-nrfconnect-mcuboot-1
+      remote: haam
       path: mcuboot
-      revision: 9d9a463f68fea23a0432e8dd597b7baad4a659ed
-    - name: nrfxlib
+      revision: feature/shared-crypto-mcuboot
+    - name: nrfxlib-1
+      remote: haam
       path: nrfxlib
-      revision: 608d4d9a9ea8248bd70255c4021f15cf3ec2847a
+      revision: multi_image_mcuboot_b0
 
   self:
     path: nrf
