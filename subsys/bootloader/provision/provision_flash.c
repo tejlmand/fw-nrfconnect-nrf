@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <generated_dts_board.h>
 #include <errno.h>
+#include <nrf.h>
+#include <assert.h>
 
 typedef struct {
 	u32_t s0_address;
@@ -19,7 +21,11 @@ typedef struct {
 } provision_flash_t;
 
 static const provision_flash_t *p_provision_data =
+#ifdef CONFIG_SOC_NRF9160
+	(provision_flash_t *)NRF_UICR_S->OTP;
+#else
 	(provision_flash_t *)PM_CFG_PROVISION_ADDRESS;
+#endif
 
 u32_t s0_address_read(void)
 {
@@ -38,6 +44,8 @@ u32_t num_public_keys_read(void)
 
 int public_key_data_read(u32_t key_idx, u8_t *p_buf, size_t buf_size)
 {
+	const u8_t *p_key;
+
 	if (buf_size < CONFIG_SB_PUBLIC_KEY_HASH_LEN) {
 		return -ENOMEM;
 	}
@@ -46,10 +54,14 @@ int public_key_data_read(u32_t key_idx, u8_t *p_buf, size_t buf_size)
 		return -EINVAL;
 	}
 
-	for (size_t i = 0; i < CONFIG_SB_PUBLIC_KEY_HASH_LEN; i++) {
-		p_buf[i] = p_provision_data->pkd[(key_idx *
-				CONFIG_SB_PUBLIC_KEY_HASH_LEN) + i];
-	}
+	p_key = &p_provision_data->pkd[key_idx * CONFIG_SB_PUBLIC_KEY_HASH_LEN];
+
+	/*
+	 * Ensure word alignment, as provision data might be stored in area
+	 * with word sized read limitation.
+	 */
+	__ASSERT(!(p_key & 3), "Key address is not multiple of 4");
+	memcpy(p_buf, p_key, CONFIG_SB_PUBLIC_KEY_HASH_LEN);
 
 	return CONFIG_SB_PUBLIC_KEY_HASH_LEN;
 }
