@@ -1,23 +1,22 @@
+nRF Connect SDK: fw-nrfconnect-nrf with multi image support
+############################################################
 
-nRF Connect SDK: fw-nrfconnect-nrf
-##################################
+To test:
+********
 
-This repository contains the Nordic-specific source code additions to open
-source projects (Zephyr RTOS and MCUboot).
-It must be combined with nrfxlib and the repositories that use the same
-naming convention to build the provided samples and to use the additional
-subsystems and libraries.
+If you have not set up west before:
+::
+  # Install west, see zephyr getting started guide for instructions
+  mkdir project_folder && cd project_folder
+  git clone -b west-test https://github.com/hakonfam/fw-nrfconnect-nrf-1.git nrf
+  unset ZEPHYR_BASE # Work around for issue fixed here https://github.com/zephyrproject-rtos/west/pull/216
+  west init -l nrf
+  west update
+  source zephyr/zephyr-env.sh
+  west build --source zephyr/samples/hello_world --board nrf9160_pca10090
 
-The following repositories must be combined with fw-nrfconnect-nrf:
 
-* fw-nrfconnect-zephyr
-* fw-nrfconnect-mcuboot
-* nrfxlib
+This will create 4 "images" in the build system,
+B0, MCUBoot, SPM and app.
 
-Disclaimer
-**********
-
-nRF Connect SDK supports development with nRF9160 Cellular IoT devices.
-It contains references and code for Bluetooth Low Energy devices in the
-nRF52 Series, though development on these devices is not currently supported
-with the nRF Connect SDK.
+It should boot hello world in the end and print to UART.
