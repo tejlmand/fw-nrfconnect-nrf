@@ -41,7 +41,7 @@ manifest:
       path: zephyr
       west-commands: scripts/west-commands.yml
       remote: haam
-      revision: multi_image_spu
+      revision: multi_image_spu_fixed_deps
     - name: fw-nrfconnect-mcuboot-1
       remote: haam
       path: mcuboot
