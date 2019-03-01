@@ -1,3 +1,4 @@
+set(KERNEL_ELF ${IMAGE}kernel_elf)
 zephyr_include_directories(${CMAKE_CURRENT_LIST_DIR}/../include)
 add_subdirectory(fw_metadata)
 #TODO: Check if CONFIG_SHARED_CRYPTO is set
@@ -27,9 +28,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/../cmake/sign.cmake)
 add_custom_target(
   sign_target
   DEPENDS
-  # TODO why does this dependency need to be here? Isnt't it sufficient
-  # to depend on SIGNED_KERNEL_HEX, which is a result of
-  ${SIGNATURE_PUBLIC_KEY_FILE_TARGET}
   ${SIGNED_KERNEL_HEX}
   )
 
@@ -43,7 +41,7 @@ add_custom_command(
   --generated-conf-files ${autoconf_files}
   --public-key-files "${SIGNATURE_PUBLIC_KEY_FILE},${PUBLIC_KEY_FILES}"
   --output ${PROVISION_HEX}
-  DEPENDS ${PROVISION_DEPENDS} sign_target
+  DEPENDS ${PROVISION_KEY_DEPENDS} signature_public_key_file_target
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
   "Creating provision data for Bootloader, storing to ${PROVISION_HEX_NAME}"
@@ -52,6 +50,6 @@ add_custom_command(
 add_custom_target(
   provision_target
   DEPENDS
-  ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME}
+  ${PROVISION_HEX}
   )
 

@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-set(sign_depends kernel_elf ${KEY_FILE_DEPENDS})
+set(sign_depends
+  ${KERNEL_ELF}        # Signing must wait for hex to sign (elf) is built.
+  ${SIGN_KEY_FILE_DEPENDS}) # Set to generation of private key when configured.
 
 set(hash_file firmware.sha256)
 set(signature_file firmware.signature)
@@ -72,10 +74,14 @@ add_custom_command(
   ${signcmd}
   DEPENDS
   ${sign_depends}
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
   "Creating signature of application"
   USES_TERMINAL
+  )
+add_custom_target(
+  signature_file_target
+  DEPENDS
+  ${signature_file}
   )
 
 if (CONFIG_SB_PRIVATE_KEY_PROVIDED)
@@ -86,10 +92,14 @@ if (CONFIG_SB_PRIVATE_KEY_PROVIDED)
     ${pubgencmd}
     DEPENDS
     ${sign_depends}
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
     COMMENT
     "Creating public key from private key used for signing"
     USES_TERMINAL
+    )
+  add_custom_target(
+    signature_public_key_file_target
+    DEPENDS
+    ${SIGNATURE_PUBLIC_KEY_FILE}
     )
 endif()
 
@@ -108,8 +118,8 @@ add_custom_command(
   --pk-hash-len ${CONFIG_SB_PUBLIC_KEY_HASH_LEN}
   DEPENDS
   ${sign_depends}
-  ${signature_file}
-  ${SIGNATURE_PUBLIC_KEY_FILE}
+  signature_file_target
+  signature_public_key_file_target
   WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
   "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX_NAME}"
