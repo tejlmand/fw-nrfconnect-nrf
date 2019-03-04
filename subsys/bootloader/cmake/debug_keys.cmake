@@ -40,7 +40,6 @@ if( "${CONFIG_SB_SIGNING_KEY_FILE}" STREQUAL "")
     COMMAND
     ${privcmd}
     --out ${debug_sign_key}
-    WORKING_DIRECTORY ${APPLICATION_BINARY_DIR}
     COMMENT
     "Generating signing key"
     USES_TERMINAL
@@ -83,7 +82,6 @@ if ("${CONFIG_SB_PUBLIC_KEY_FILES}" STREQUAL "")
     ${pubcmd}
     --in ${debug_private_key_1}
     --out ${debug_public_key_1}
-    WORKING_DIRECTORY ${APPLICATION_BINARY_DIR}
     COMMENT
     "Generating extra provision key files"
     USES_TERMINAL

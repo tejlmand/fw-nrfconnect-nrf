@@ -17,19 +17,13 @@ set_property(
 set_property(
   GLOBAL APPEND PROPERTY
   HEX_FILES_TO_MERGE_TARGET
-  sign_target
+  signed_kernel_hex_target
   provision_target
 )
 
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/debug_keys.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/fw_info_magic.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/../cmake/sign.cmake)
-
-add_custom_target(
-  sign_target
-  DEPENDS
-  ${SIGNED_KERNEL_HEX}
-  )
 
 file(GLOB_RECURSE autoconf_files "${PROJECT_BINARY_DIR}/**/autoconf.h")
 add_custom_command(
@@ -42,7 +36,6 @@ add_custom_command(
   --public-key-files "${SIGNATURE_PUBLIC_KEY_FILE},${PUBLIC_KEY_FILES}"
   --output ${PROVISION_HEX}
   DEPENDS ${PROVISION_KEY_DEPENDS} signature_public_key_file_target
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
   "Creating provision data for Bootloader, storing to ${PROVISION_HEX_NAME}"
   USES_TERMINAL

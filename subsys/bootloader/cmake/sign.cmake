@@ -117,11 +117,14 @@ add_custom_command(
   --magic-value "${VALIDATION_INFO_MAGIC}"
   --pk-hash-len ${CONFIG_SB_PUBLIC_KEY_HASH_LEN}
   DEPENDS
-  ${sign_depends}
   signature_file_target
   signature_public_key_file_target
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   COMMENT
   "Creating validation for ${KERNEL_HEX_NAME}, storing to ${SIGNED_KERNEL_HEX_NAME}"
   USES_TERMINAL
+  )
+add_custom_target(
+  signed_kernel_hex_target
+  DEPENDS
+  ${SIGNED_KERNEL_HEX}
   )
