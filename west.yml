@@ -27,6 +27,8 @@ manifest:
       # nRF Connect SDK base URL.
     - name: ncs
       url-base: https://github.com/NordicPlayground
+    - name: throwtheswitch
+      url-base: https://github.com/ThrowTheSwitch
 
   # The list of external projects for the nRF Connect SDK.
   #
@@ -41,6 +43,14 @@ manifest:
     - name: nrfxlib
       path: nrfxlib
       revision: d98b59bdff2b533f5afb7bdad229eaeb4a931882
+    - name: cmock
+      path: test/cmock
+      revision: c243b9a7a7b3c471023193992b46cf1bd1910450
+      remote: throwtheswitch
+    - name: unity
+      path: test/cmock/vendor/unity
+      revision: 031f3bbe45f8adf504ca3d13e6f093869920b091
+      remote: throwtheswitch
 
   self:
     path: nrf
