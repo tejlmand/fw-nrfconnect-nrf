@@ -33,6 +33,10 @@ manifest:
       url-base: https://github.com/ThrowTheSwitch
     - name: armmbed
       url-base: https://github.com/ARMmbed
+    - name: tejlmand
+      url-base: https://github.com/tejlmand
+    - name: secure-tejlmand
+      url-base: https://projecttools.nordicsemi.no/bitbucket/scm/~tora
 
   # The list of external projects for the nRF Connect SDK.
   #
@@ -40,7 +44,8 @@ manifest:
     - name: fw-nrfconnect-zephyr
       path: zephyr
       west-commands: scripts/west-commands.yml
-      revision: 7e64ac737daead12d2dbdda5daec04188243a81c
+      remote: tejlmand
+      revision: echo_server_cc310_support
     - name: nffs
       revision: bc62a2fa9d98ddb5d633c932ea199bc68e10f194
       path: modules/fs/nffs
@@ -60,7 +65,8 @@ manifest:
       revision: 543ecb7c8662580ef803d59ceda7bd3b8a84a11b
     - name: nrfxlib
       path: nrfxlib
-      revision: be4d8e08958e4ad960f39be24cf2816ced008841
+      remote: tejlmand
+      revision: echo_server_cc310_support
     - name: cmock
       path: test/cmock
       revision: c243b9a7a7b3c471023193992b46cf1bd1910450
