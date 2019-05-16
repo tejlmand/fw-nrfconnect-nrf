@@ -1,0 +1,30 @@
+# Kconfig - Arm CC310 entropy driver for nRF52840 and nRF9160
+#
+# Copyright (c) 2018 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
+#
+
+config ENTROPY_CC310_FORCE_ALT
+	bool
+	depends on SOC_COMPATIBLE_NRF
+	help
+	  This option can be enabled to force an alternative implementation of
+	  the Arm CC310 entropy driver.
+
+if !ENTROPY_CC310_FORCE_ALT
+
+menuconfig ENTROPY_CC310
+	bool "Arm CC310 RNG driver for Nordic devices"
+	depends on SOC_NRF52840 || SOC_NRF9160
+	select ENTROPY_HAS_DRIVER
+	select MBEDTLS
+	select NORDIC_SECURITY_BACKEND
+	select MBEDTLS_CC310_BACKEND
+	default y
+	help
+	  This option enables the Arm CC310 RNG devices in nRF52840 and nRF9160
+	  devices. This is dependant on nrf_cc310_mbedcrypto being enabled in
+	  the system, e.g. through the nrf_security module
+
+endif # !ENTROPY_CC310_FORCE_ALT
