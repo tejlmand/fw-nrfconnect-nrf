@@ -14,9 +14,10 @@ config ENTROPY_CC310_FORCE_ALT
 
 if !ENTROPY_CC310_FORCE_ALT
 
-menuconfig ENTROPY_CC310
+menuconfig ENTROPY_CC310_RNG
 	bool "Arm CC310 RNG driver for Nordic devices"
 	depends on SOC_NRF52840 || SOC_NRF9160
+	depends on !ENTROPY_NRF5_RNG
 	select ENTROPY_HAS_DRIVER
 	select MBEDTLS
 	select NORDIC_SECURITY_BACKEND
