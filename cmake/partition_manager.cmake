@@ -13,7 +13,6 @@ Also, the each image's hex file will be automatically associated with its partit
 # Create a variable which exposes the correct logical target for the current image.
 set(${IMAGE}logical_target ${logical_target_for_zephyr_elf} CACHE STRING "" FORCE)
 
-if(FIRST_BOILERPLATE_EXECUTION)
   get_property(PM_IMAGES GLOBAL PROPERTY PM_IMAGES)
 
   set(static_configuration_file ${APPLICATION_SOURCE_DIR}/pm_static.yml)
@@ -31,16 +30,28 @@ if(FIRST_BOILERPLATE_EXECUTION)
     set_property(GLOBAL PROPERTY app_PROJECT_BINARY_DIR ${PROJECT_BINARY_DIR})
     set_property(GLOBAL PROPERTY app_PM_HEX_FILE ${PROJECT_BINARY_DIR}/${KERNEL_HEX_NAME})
     set_property(GLOBAL PROPERTY app_PM_TARGET ${logical_target_for_zephyr_elf})
-    list(APPEND PM_IMAGES app_)
+#    list(APPEND PM_IMAGES app_)
 
     # Prepare the input_files, header_files, and images lists
+#    foreach (IMAGE ${PM_IMAGES})
+#      get_image_name(${IMAGE} image_name) # Removes the trailing '_'
+#      list(APPEND images ${image_name})
+#      get_property(${IMAGE}PROJECT_BINARY_DIR GLOBAL PROPERTY ${IMAGE}PROJECT_BINARY_DIR)
+#      list(APPEND input_files ${${IMAGE}PROJECT_BINARY_DIR}/${generated_path}/pm.yml)
+#      list(APPEND header_files ${${IMAGE}PROJECT_BINARY_DIR}/${generated_path}/pm_config.h)
+#    endforeach()
+
     foreach (IMAGE ${PM_IMAGES})
       get_image_name(${IMAGE} image_name) # Removes the trailing '_'
       list(APPEND images ${image_name})
-      get_property(${IMAGE}PROJECT_BINARY_DIR GLOBAL PROPERTY ${IMAGE}PROJECT_BINARY_DIR)
-      list(APPEND input_files ${${IMAGE}PROJECT_BINARY_DIR}/${generated_path}/pm.yml)
-      list(APPEND header_files ${${IMAGE}PROJECT_BINARY_DIR}/${generated_path}/pm_config.h)
+      list(APPEND input_files ${CMAKE_BINARY_DIR}/${image_name}/zephyr/${generated_path}/pm.yml)
+      list(APPEND header_files ${CMAKE_BINARY_DIR}/${image_name}/zephyr/${generated_path}/pm_config.h)
     endforeach()
+
+    # Special treatmen of the app image.
+    list(APPEND images "app")
+    list(APPEND input_files ${CMAKE_BINARY_DIR}/zephyr/${generated_path}/pm.yml)
+    list(APPEND header_files ${CMAKE_BINARY_DIR}/zephyr/${generated_path}/pm_config.h)
 
     math(EXPR flash_size "${CONFIG_FLASH_SIZE} * 1024")
 
@@ -121,7 +132,9 @@ if(FIRST_BOILERPLATE_EXECUTION)
       else()
         if(${part} IN_LIST images)
           get_property(${part}_KERNEL_NAME GLOBAL PROPERTY ${part}_KERNEL_NAME)
-          set(${part}_PM_HEX_FILE ${${part}_PROJECT_BINARY_DIR}/${${part}_KERNEL_NAME}.hex)
+#          set(${part}_PM_HEX_FILE ${${part}_PROJECT_BINARY_DIR}/${${part}_KERNEL_NAME}.hex)
+#          set(${part}_PM_TARGET ${${part}_logical_target})
+          set(${part}_PM_HEX_FILE ${CMAKE_BINARY_DIR}/${part}/zephyr/${${part}_KERNEL_NAME}.hex)
           set(${part}_PM_TARGET ${${part}_logical_target})
         elseif(${part} IN_LIST containers)
           set(${part}_PM_HEX_FILE ${PROJECT_BINARY_DIR}/${part}.hex)
@@ -162,6 +175,7 @@ if(FIRST_BOILERPLATE_EXECUTION)
         ${${container}hex_files}
         DEPENDS
         ${${container}targets}
+        ${${container}hex_files}
         )
 
       # Wrapper target for the merge command.
@@ -197,4 +211,3 @@ if(FIRST_BOILERPLATE_EXECUTION)
       ${s1_offset}
       )
   endif()
-endif()

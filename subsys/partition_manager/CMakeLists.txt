@@ -26,22 +26,24 @@ endfunction()
 zephyr_compile_definitions(
   USE_PARTITION_MANAGER=$<TARGET_EXISTS:partition_manager>
   )
-set_property(GLOBAL APPEND PROPERTY
-  ${IMAGE}PROPERTY_LINKER_SCRIPT_DEFINES
-  -DUSE_PARTITION_MANAGER=$<TARGET_EXISTS:partition_manager>
-  )
+#set_property(GLOBAL APPEND PROPERTY
+#  ${IMAGE}PROPERTY_LINKER_SCRIPT_DEFINES
+#  -DUSE_PARTITION_MANAGER=$<TARGET_EXISTS:partition_manager>
+#  )
 
-if((EXISTS ${APPLICATION_SOURCE_DIR}/pm.yml) AND IMAGE)
+#if((EXISTS ${APPLICATION_SOURCE_DIR}/pm.yml) AND IMAGE)
+if(${GENERATE_PARTITION_MANAGER_ENTRY})
   # Only preprocess pm.yml when being built as sub image.
 
   preprocess_pm_yml(
-    ${APPLICATION_SOURCE_DIR}/pm.yml
+#    ${APPLICATION_SOURCE_DIR}/pm.yml
+    ${CMAKE_SOURCE_DIR}/pm.yml
     ${PROJECT_BINARY_DIR}/include/generated/pm.yml
     )
 
-  set_property(
-    GLOBAL APPEND PROPERTY
-    PM_IMAGES
-    ${IMAGE}
-    )
+#  set_property(
+#    GLOBAL APPEND PROPERTY
+#    PM_IMAGES
+#    ${IMAGE}
+#    )
 endif()

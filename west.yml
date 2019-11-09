@@ -23,6 +23,8 @@ manifest:
       # nRF Connect SDK base URL.
     - name: ncs
       url-base: https://github.com/NordicPlayground
+    - name: tejlmand
+      url-base: https://github.com/tejlmand
     - name: zephyrproject
       url-base: https://github.com/zephyrproject-rtos
     - name: throwtheswitch
@@ -36,9 +38,10 @@ manifest:
   #
   projects:
     - name: zephyr
-      repo-path: fw-nrfconnect-zephyr
+      repo-path: fw-nrfconnect-zephyr-1
       west-commands: scripts/west-commands.yml
-      revision: pull/230/head
+      revision: 7bd48ae33e336ace810bbf206f4bdf52b022fb3e # multi_image_revert-branch
+      remote: tejlmand
     - name: nffs
       revision: bc62a2fa9d98ddb5d633c932ea199bc68e10f194
       path: modules/fs/nffs
