@@ -37,18 +37,15 @@ set_property(GLOBAL APPEND PROPERTY
   -DUSE_PARTITION_MANAGER=${using_partition_manager}
   )
 
-
 get_domain(${BOARD} domain)
 
 if (((EXISTS ${CMAKE_SOURCE_DIR}/pm.yml) AND IMAGE_NAME) OR
   ("${IMAGE_NAME}" STREQUAL "${PM_${domain}_DYNAMIC_PARTITION}_"))
   # Only preprocess pm.yml when being built as sub image.
 
-  message("Checking if ${BOARD} is in ${PM_DOMAINS}")
 
   # Only add ${BOARD} as domain if not already added
   if (NOT (${BOARD} IN_LIST PM_DOMAINS))
-    message("ADDING BOARD ${BOARD}")
     set_property(
       TARGET         zephyr_property_target
       APPEND_STRING
@@ -56,31 +53,23 @@ if (((EXISTS ${CMAKE_SOURCE_DIR}/pm.yml) AND IMAGE_NAME) OR
       "list(APPEND PM_DOMAINS ${BOARD})\n"
       )
 
-    # TODO get these from DT or something
-    if (${BOARD} STREQUAL nrf5340_dk_nrf5340_cpunet)
-      set(base 16777216)
-      set(size 256)
-    else()
-      set(base 0)
-      set(size 1024)
-    endif()
-
     set_property(
       TARGET         zephyr_property_target
       APPEND_STRING
       PROPERTY       shared_vars
-      "set(PM_DOMAINS_${BOARD}_FLASH_BASE_ADDRESS ${base} CACHE STRING \"\" FORCE)\n"
+      "set(PM_DOMAINS_${BOARD}_FLASH_BASE_ADDRESS ${CONFIG_FLASH_BASE_ADDRESS} CACHE STRING \"\" FORCE)\n"
       )
 
     set_property(
       TARGET         zephyr_property_target
       APPEND_STRING
       PROPERTY       shared_vars
-      "set(PM_DOMAINS_${BOARD}_FLASH_SIZE ${size} CACHE STRING \"\" FORCE)\n"
+      "set(PM_DOMAINS_${BOARD}_FLASH_SIZE ${CONFIG_FLASH_SIZE} CACHE STRING \"\" FORCE)\n"
       )
   endif()
 
   # Only non-dynamic sub-images will have pm.yml files.
+  # E.g. the main app on a domain will not have a pm.yml file.
   if (EXISTS ${CMAKE_SOURCE_DIR}/pm.yml)
     preprocess_pm_yml(
       ${CMAKE_SOURCE_DIR}/pm.yml

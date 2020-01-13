@@ -515,7 +515,7 @@ This file contains all addresses and sizes of all partitions.
     parser.add_argument("--flash-size", required=True, type=int,
                         help="Flash size of chip in kB.")
 
-    parser.add_argument("--flash-start", required=True, type=int,
+    parser.add_argument("--flash-start", required=True, type=lambda x: int(x, 0),
                         help="Start address of flash.")
 
     parser.add_argument("--output", required=True, type=str,

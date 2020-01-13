@@ -5,7 +5,6 @@
 #
 
 if (CONFIG_SPM)
-  message("adding spm PM_DOMAINS is ${PM_DOMAINS}")
   add_child_image(spm ${CMAKE_CURRENT_LIST_DIR}/nrf9160/spm)
 
   if (CONFIG_ARM_FIRMWARE_USES_SECURE_ENTRY_FUNCS AND
@@ -20,12 +19,13 @@ if (CONFIG_SPM)
 endif()
 
 if (CONFIG_SECURE_BOOT)
-  message("adding b0 PM_DOMAINS is ${PM_DOMAINS}")
   add_child_image(b0 ${CMAKE_CURRENT_LIST_DIR}/bootloader)
 endif ()
 
 if (CONFIG_HCI_RPMSG)
-  if (BOARD STREQUAL nrf5340_dk_nrf5340_cpuappns)
+  if ((BOARD STREQUAL nrf5340_dk_nrf5340_cpuappns) OR
+      (BOARD STREQUAL nrf5340_dk_nrf5340_cpuapp))
+
     set(hci_rpmsg_BOARD nrf5340_dk_nrf5340_cpunet)
     set(PM_${hci_rpmsg_BOARD}_DYNAMIC_PARTITION hci_rpmsg CACHE STRING "" FORCE)
   else()

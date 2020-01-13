@@ -16,8 +16,16 @@ endif()
 # TODO make it so that this is not required
 list(REMOVE_DUPLICATES PM_DOMAINS)
 
-# Create a variable exposing the correct logical target for the current image.
 get_domain(${BOARD} domain)
+
+# The current domain has not been added, add it.
+if (NOT (domain) IN_LIST PM_DOMAINS)
+  list(APPEND PM_DOMAINS ${domain})
+  set(PM_DOMAINS_${domain}_FLASH_BASE_ADDRESS 0 CACHE STRING "" FORCE)
+  set(PM_DOMAINS_${domain}_FLASH_SIZE 1024 CACHE STRING "" FORCE)
+endif()
+
+# Create a variable exposing the correct logical target for the current image.
 
 function(get_image_name image out_var)
   string(LENGTH ${image} len)
@@ -74,9 +82,7 @@ foreach (d ${PM_DOMAINS})
   endif()
 
   if (PM_${d}_DYNAMIC_PARTITION)
-    set(dyn ${PM_${d}_DYNAMIC_PARTITION})
-    set(dyn_prjbin ${${d}_${dyn}_PROJECT_BINARY_DIR})
-    set(dynamic_partition_arg "-d ${dyn}")
+    set(dynamic_partition_arg "-d ${PM_${d}_DYNAMIC_PARTITION}")
   else()
     # 'app' is the dynamic partition
     # Special treatment of the app image.
@@ -85,6 +91,7 @@ foreach (d ${PM_DOMAINS})
     list(APPEND header_files ${PROJECT_BINARY_DIR}/${generated_path}/pm_config.h)
 
     set(${d}_app_PROJECT_BINARY_DIR ${PROJECT_BINARY_DIR})
+    set(dynamic_partition_arg "")
 
     set_property(GLOBAL PROPERTY
       PM_${d}_app_HEX_FILE
@@ -249,7 +256,6 @@ foreach (d ${PM_DOMAINS})
 
     set(merge_out ${PROJECT_BINARY_DIR}/${d}_${container}.hex)
 
-    print(${d}_${container}_hex_files)
     # Add command to merge files.
     add_custom_command(
       OUTPUT ${merge_out}
