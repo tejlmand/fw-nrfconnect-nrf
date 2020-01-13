@@ -87,7 +87,7 @@ endif()
 get_property(
   img_pm_subsys
   GLOBAL PROPERTY
-  ${BOARD}_${IMAGE}PM_SUBSYS # ${IMAGE} ends with '_' 
+  ${IMAGE}PM_SUBSYS # ${IMAGE} ends with '_' 
   )
 
 if (img_pm_subsys)
@@ -101,7 +101,7 @@ if (img_pm_subsys)
       )
     set_property(
       GLOBAL APPEND PROPERTY
-      PM_SUBSYS_PREPROCESSED_${BOARD}
+      PM_SUBSYS_PREPROCESSED
       ${subsys_pm_preprocessed}
       )
   endforeach()

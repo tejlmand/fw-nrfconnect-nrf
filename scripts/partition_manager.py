@@ -259,17 +259,17 @@ def app_size(reqs, total_size):
     return size
 
 
-def verify_layout(reqs, solution, total_size):
+def verify_layout(reqs, solution, total_size, flash_start):
     # Verify no overlap, that all flash is assigned, and that the total amount of flash
     # assigned corresponds to the total size available.
-    expected_address = reqs[solution[0]]['size']
+    expected_address = flash_start + reqs[solution[0]]['size']
     for p in solution[1:]:
         actual_address = reqs[p]['address']
         if actual_address != expected_address:
             raise RuntimeError("Error when inspecting {}, invalid address {}".format(p, actual_address))
         expected_address += reqs[p]['size']
     last = reqs[solution[-1]]
-    assert last['address'] + last['size'] == total_size
+    assert last['address'] + last['size'] == flash_start + total_size
 
 
 def set_addresses_and_align(reqs, sub_partitions, solution, size, start=0):
@@ -282,7 +282,7 @@ def set_addresses_and_align(reqs, sub_partitions, solution, size, start=0):
 
     if len(reqs) > 1:
         _set_addresses_and_align(reqs, sub_partitions, solution, size, start, dynamic_partitions)
-        verify_layout(reqs, solution, size)
+        verify_layout(reqs, solution, size, start)
 
 
 def first_partition_has_been_aligned(first, solution):
@@ -313,7 +313,7 @@ def _set_addresses_and_align(reqs, sub_partitions, solution, size, start, dynami
         current = solution[i]
 
         if i == len(solution) - 1:
-            reqs[current]['address'] = size - reqs[current]['size']
+            reqs[current]['address'] = (start + size) - reqs[current]['size']
         else:
             higher_partition = solution[i + 1]
             reqs[current]['address'] = reqs[higher_partition]['address'] - reqs[current]['size']
@@ -530,6 +530,16 @@ This file contains all addresses and sizes of all partitions.
     return parser.parse_args()
 
 
+def replace_app_with_dynamic_partition(d, dynamic_partition_name):
+    for k, v in d.items():
+        if isinstance(v, dict):
+            replace_app_with_dynamic_partition(v, dynamic_partition_name)
+        elif isinstance(v, list) and "app" in v:
+            d[k] = [o if o != "app" else dynamic_partition_name for o in v]
+        elif isinstance(v, str) and v == "app":
+            v = dynamic_partition_name
+
+
 def main():
     if len(sys.argv) > 1:
         static_config = None
@@ -541,6 +551,7 @@ def main():
         if args.dynamic_partition:
             pm_config[args.dynamic_partition.strip()] = pm_config['app']
             del pm_config['app']
+            replace_app_with_dynamic_partition(pm_config, args.dynamic_partition.strip())
         write_yaml_out_file(pm_config, args.output)
     else:
         print("No input, running tests.")

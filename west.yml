@@ -39,7 +39,7 @@ manifest:
       remote: hakonfam
       repo-path: fw-nrfconnect-zephyr
       west-commands: scripts/west-commands.yml
-      revision: pm_53
+      revision: pm_53_simple
     - name: nffs
       revision: bc62a2fa9d98ddb5d633c932ea199bc68e10f194
       path: modules/fs/nffs
@@ -55,7 +55,7 @@ manifest:
     - name: mcuboot
       remote: hakonfam
       repo-path: fw-nrfconnect-mcuboot-1
-      revision: pm_53
+      revision: pm_53_simple
     - name: mcumgr
       repo-path: fw-nrfconnect-mcumgr
       revision: f663988d35da559a37f263d369842dbce309d1fa

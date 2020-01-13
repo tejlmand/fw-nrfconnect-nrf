@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-set(GENERATED_PATH ${PROJECT_BINARY_DIR}/nrf/subsys/bootloader_${domain}/generated)
+set(GENERATED_PATH ${PROJECT_BINARY_DIR}/nrf/subsys/bootloader/generated)
 
 # This is needed for make, ninja is able to resolve and create the path but make
 # is not able to resolve it.
@@ -64,20 +64,17 @@ if (CONFIG_MCUBOOT_BUILD_S1_VARIANT)
   set(s1_image_is_from_child_image mcuboot)
 endif ()
 
-get_domain(${BOARD} domain)
-
 foreach (slot ${slots})
-  set(signed_hex ${PROJECT_BINARY_DIR}/${domain}_signed_by_b0_${slot}.hex)
+  set(signed_hex ${PROJECT_BINARY_DIR}/signed_by_b0_${slot}.hex)
 
-  set(sign_depends ${domain}_${slot}_hex)
-
+  set(sign_depends ${PROJECT_BINARY_DIR}/${slot}.hex)
   if(DEFINED ${slot}_is_from_child_image)
-    list(APPEND sign_depends ${domain}_${${slot}_is_from_child_image}_subimage)
+    list(APPEND sign_depends ${${slot}_is_from_child_image}_subimage)
   else()
-    list(APPEND sign_depends ${domain}_${slot}_hex)
+    list(APPEND sign_depends ${slot}_hex)
   endif()
 
-  set(to_sign ${PROJECT_BINARY_DIR}/${domain}_${slot}.hex)
+  set(to_sign ${PROJECT_BINARY_DIR}/${slot}.hex)
   set(hash_file ${GENERATED_PATH}/${slot}_firmware.sha256)
   set(signature_file ${GENERATED_PATH}/${slot}_firmware.signature)
 
@@ -175,16 +172,15 @@ foreach (slot ${slots})
 
   # Set hex file and target for the ${slot) (s0/s1) container partition.
   # This includes the hex file (and its corresponding target) to the build.
-  get_domain(${BOARD} domain)
   set_property(
     GLOBAL PROPERTY
-    PM_${domain}_${slot}_HEX_FILE
+    ${slot}_PM_HEX_FILE
     ${signed_hex}
     )
 
   set_property(
     GLOBAL PROPERTY
-    PM_${domain}_${slot}_TARGET
+    ${slot}_PM_TARGET
     ${slot}_signed_kernel_hex_target
     )
 

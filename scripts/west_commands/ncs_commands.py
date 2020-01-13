@@ -223,7 +223,6 @@ class NcsLoot(NcsWestCommand):
         except nwh.UnknownCommitsError as uce:
             log.die('unknown commits:', str(uce))
 
-
 class NcsCompare(NcsWestCommand):
     def __init__(self):
         super().__init__(
@@ -380,7 +379,6 @@ class NcsCompare(NcsWestCommand):
             log.inf(downstream_rev)
             self.likely_merged(np, zp, nsha, zsha)
 
-
     def likely_merged(self, np, zp, nsha, zsha):
         analyzer = nwh.RepoAnalyzer(np, zp, nsha, zsha)
         likely_merged = analyzer.likely_merged
@@ -397,7 +395,6 @@ class NcsCompare(NcsWestCommand):
                             format(uc.oid, nwh.commit_shortlog(uc)))
         else:
             log.inf('no downstream patches seem to have been merged upstream')
-
 
     def to_ncs_name(self, zp):
         # convert zp, a west.manifest.Project in the zephyr manifest,

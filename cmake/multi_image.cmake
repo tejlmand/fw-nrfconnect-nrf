@@ -4,20 +4,7 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-
 if(IMAGE_NAME)
-  get_domain(${BOARD} domain)
-  # Current image is a child image
-
-  # Store the ${PROJECT_BINARY_DIR} of the current image
-  set_property(
-    TARGET        zephyr_property_target
-    APPEND_STRING
-    PROPERTY      shared_vars
-    "set(${domain}_${IMAGE_NAME}PROJECT_BINARY_DIR ${PROJECT_BINARY_DIR})\n"
-    )
-
-  # Store the ${logical_target_for_zephyr_elf} of the current image
   set_property(
     TARGET         zephyr_property_target
     APPEND_STRING
@@ -183,20 +170,10 @@ function(add_child_image_from_source name sourcedir)
 
   # Increase the scope of these variables to make them more available
   set(${name}_KERNEL_HEX_NAME ${${name}_KERNEL_HEX_NAME} CACHE STRING "" FORCE)
-  set(
-    ${domain}_${name}_PROJECT_BINARY_DIR
-    ${${domain}_${name}_PROJECT_BINARY_DIR}
-    CACHE STRING "" FORCE
-    )
-  set(
-    ${domain}_${name}_PROJECT_BINARY_DIR
-    ${${domain}_${name}_PROJECT_BINARY_DIR}
-    CACHE STRING "" FORCE
-    )
   set(PM_DOMAINS ${PM_DOMAINS} CACHE STRING "" FORCE)
 
   include(ExternalProject)
-  ExternalProject_Add(${domain}_${name}_subimage
+  ExternalProject_Add(${name}_subimage
     SOURCE_DIR ${sourcedir}
     BINARY_DIR ${CMAKE_BINARY_DIR}/${name}
     BUILD_BYPRODUCTS ${${name}_BUILD_BYPRODUCTS} # Set by shared_vars.cmake
@@ -219,9 +196,11 @@ function(add_child_image_from_source name sourcedir)
       )
   endforeach()
 
-  set_property(
-    GLOBAL APPEND PROPERTY
-    PM_IMAGES_${domain}
-    "${name}"
-    )
+  if (NOT "${name}" STREQUAL "${PM_${domain}_DYNAMIC_PARTITION}")
+    set_property(
+      GLOBAL APPEND PROPERTY
+      PM_IMAGES
+      "${name}"
+      )
+  endif()
 endfunction()

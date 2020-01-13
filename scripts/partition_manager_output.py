@@ -35,7 +35,7 @@ def get_config_lines(gpm_config, head, split, dest, current_domain=None):
 
     for domain, pm_config in gpm_config.items():
         def add_line(a, b):
-            if current_domain is not None and domain == current_domain:
+            if current_domain is None or domain == current_domain or "LABEL" in a:
                 # Don't prefix with domain for the current domain
                 config_lines.append("{}PM_{}{}{}".format(head, a, split, b))
             else:
@@ -47,7 +47,8 @@ def get_config_lines(gpm_config, head, split, dest, current_domain=None):
             add_line("%s_SIZE" % name.upper(), "0x%x" % partition['size'])
             add_line("%s_ID" % name.upper(), "%d" % partition_id)
             add_line("%s_NAME" % name.upper(), "%s" % name)
-            add_line("%d_LABEL" % partition_id, "%s" % name.upper())
+            add_line("%d_LABEL" % partition_id, "%s%s" %
+                     ("" if domain == current_domain else domain + "_", name.upper()))
             if dest is DEST_HEADER:
                 add_line("%s_DEV_NAME" % name.upper(), "\"NRF_FLASH_DRV_NAME\"")
             elif dest is DEST_KCONFIG:
@@ -79,6 +80,7 @@ def write_config_lines_to_file(pm_config_file_path, config_lines):
 
 def write_gpm_config(gpm_config, name, out_path):
     pm_config_file = path.basename(out_path)
+
     image = name[name.index(':')+1:]
     domain = name[:name.index(':')]
     config_lines = get_config_lines(gpm_config, "#define ", " ", DEST_HEADER, domain)
@@ -106,18 +108,15 @@ def parse_args():
     parser.add_argument("--input", required=True, type=str, nargs="+",
                         help="Path to the input .yml files, one per domain.")
 
-    parser.add_argument("--config-file", required=True, type=str,
+    parser.add_argument("--config-file", required=False, type=str,
                         help="Path to the output .config file.")
 
-    parser.add_argument("--images", required=True, type=str, nargs="+",
+    parser.add_argument("--images", required=False, type=str, nargs="+",
                         help="List of domain prefixed image partitions.")
 
-    parser.add_argument("--header-files", required=True, type=str, nargs='+',
+    parser.add_argument("--header-files", required=False, type=str, nargs='+',
                         help="Paths to the output header files files."
                              "These will be matched to the --input-names.")
-
-    parser.add_argument("-d", "--dynamic-partition", required=False, type=str,
-                        help="Name of dynamic partition ('app' is default). ")
 
     return parser.parse_args()
 
@@ -133,10 +132,12 @@ def main():
         with open(i, 'r') as f:
             gpm_config[domain_name] = yaml.safe_load(f)
 
-    write_kconfig_file(gpm_config, args.config_file)
+    if args.config_file:
+        write_kconfig_file(gpm_config, args.config_file)
 
-    for name, header_file in zip(args.images, args.header_files):
-        write_gpm_config(gpm_config, name, header_file)
+    if args.header_files:
+        for name, header_file in zip(args.images, args.header_files):
+            write_gpm_config(gpm_config, name, header_file)
 
 
 if __name__ == "__main__":

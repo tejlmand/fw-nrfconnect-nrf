@@ -14,8 +14,6 @@ function(add_overlay_config image overlay_file)
   endif()
 endfunction()
 
-get_domain(${BOARD} domain)
-
 # This CMakeLists.txt is executed by the root application only when
 # B0 (SECURE_BOOT) is enabled. First, figure out what image will be
 # booted by B0, and set the required properties for that image to be
@@ -30,7 +28,7 @@ if (CONFIG_BOOTLOADER_MCUBOOT)
     )
 
   # Partition S1 is only enabled when MCUBoot is enabled.
-  set(s1_addr $<TARGET_PROPERTY:partition_manager,PM_${domain}_S1_ADDRESS>)
+  set(s1_addr $<TARGET_PROPERTY:partition_manager,PM_S1_ADDRESS>)
 
 else()
 
@@ -56,7 +54,7 @@ else()
 endif()
 
 # Partition S0 will always contain the image to be booted by B0.
-set(s0_addr $<TARGET_PROPERTY:partition_manager,PM_${domain}_S0_ADDRESS>)
+set(s0_addr $<TARGET_PROPERTY:partition_manager,PM_S0_ADDRESS>)
 if (s1_addr)
   set(s1_arg --s1-addr ${s1_addr})
 endif()
@@ -89,7 +87,7 @@ add_custom_command(
   ${NRF_BOOTLOADER_SCRIPTS}/provision.py
   --s0-addr ${s0_addr}
   ${s1_arg}
-  --provision-addr $<TARGET_PROPERTY:partition_manager,PM_${domain}_PROVISION_ADDRESS>
+  --provision-addr $<TARGET_PROPERTY:partition_manager,PM_PROVISION_ADDRESS>
   --public-key-files ${ALL_PUBLIC_KEY_FILES}
   --output ${PROVISION_HEX}
   DEPENDS
@@ -110,7 +108,7 @@ add_custom_target(
 
 get_property(
   provision_set
-  GLOBAL PROPERTY PM_${domain}_provision_HEX_FILE SET
+  GLOBAL PROPERTY provision_PM_HEX_FILE SET
   )
 
 if(NOT provision_set)
@@ -118,13 +116,13 @@ if(NOT provision_set)
   # This includes the hex file (and its corresponding target) to the build.
   set_property(
     GLOBAL PROPERTY
-    PM_${domain}_provision_HEX_FILE
+    provision_PM_HEX_FILE
     ${PROVISION_HEX}
     )
 
   set_property(
     GLOBAL PROPERTY
-    PM_${domain}_provision_TARGET
+    provision_PM_TARGET
     provision_target
     )
 endif()
