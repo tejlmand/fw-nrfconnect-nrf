@@ -108,7 +108,6 @@ add_custom_target(
   signature_public_key_file_target
   )
 
-get_domain(${BOARD} domain)
 get_property(
   provision_set
   GLOBAL PROPERTY PM_${domain}_provision_HEX_FILE SET

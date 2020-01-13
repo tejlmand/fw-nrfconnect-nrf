@@ -123,7 +123,6 @@ class NcsWestCommand(WestCommand):
             self.parser.error(msg)
         return zephyr_rev
 
-
 class NcsLoot(NcsWestCommand):
 
     def __init__(self):

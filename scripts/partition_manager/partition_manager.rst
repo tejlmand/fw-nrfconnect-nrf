@@ -56,17 +56,17 @@ This file must be stored in the same folder as the main :file:`CMakeLists.txt` f
 Partition Manager configuration can be also provided by a subsystem.
 Subsystem Partition Manager configurations cannot define image partitions.
 
+There are some limitations when multiple images within the same domain include the same subsystem which defines a Partition Manager configuration.
+All partitions are global within each domain, and will only be included once, even if multiple configurations define them.
+When multiple configurations define the same partition, the configuration of that partition must be identical in all definitions.
+An exception is raised if the configuration differs.
+
 The listing below shows how to properly define the Partition Manager configuration for a subsystem.
 This must be placed in the :file:`CMakeLists.txt` that defines the subsystem.
 
 .. code-block:: cmake
 
   add_partition_manager_config(pm.yml)
-
-There are some limitations when multiple images within the same domain include the same subsystem which defines a Partition Manager configuration.
-All partitions are global within each domain, and will only be included once, even if multiple configurations define them.
-When multiple configurations define the same partition, the configuration of that partition must be identical in all definitions.
-An exception is raised if the configuration differs.
 
 .. _pm_yaml_format:
 
@@ -112,7 +112,6 @@ placement: dict
       align: dict
          Ensure alignment of start or end of partition by specifying a dict with a ``start`` or ``end`` key respectively, where the value is the number of bytes to align to.
          If necessary, empty partitions are inserted in front of or behind the partition to ensure that the alignment is correct.
-
          Only one key can be specified.
          Partitions which directly or indirectly (through spans) share size with the ``app`` partitions can only be aligned if they are placed directly after the ``app`` partition.
 

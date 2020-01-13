@@ -83,8 +83,6 @@ function(add_child_image name sourcedir)
 endfunction()
 
 function(add_child_image_from_source name sourcedir)
-  message("\n=== child image ${name} begin ===")
-
   # Set ${name}_BOARD based on what BOARD is set to if not already done.
   if (NOT ${name}_BOARD)
     image_board_selection(${BOARD} ${name}_BOARD)
@@ -92,8 +90,7 @@ function(add_child_image_from_source name sourcedir)
 
   get_domain(${${name}_BOARD} domain)
 
-  message("=== Domain - ${domain}  ===")
-
+  message("\n=== child image ${name} - ${domain} begin ===")
 
   # Construct a list of variables that, when present in the root
   # image, should be passed on to all child images as well.
@@ -177,7 +174,7 @@ function(add_child_image_from_source name sourcedir)
     message(FATAL_ERROR "CMake generation for ${name} failed, aborting. Command: ${ret}")
   endif()
 
-  message("=== child image ${name} for domain ${domain} end ===\n")
+  message("=== child image ${name} - ${domain} end ===\n")
 
   # Include some variables from the child image into the parent image
   # namespace. Note that these are by default only visible in the current

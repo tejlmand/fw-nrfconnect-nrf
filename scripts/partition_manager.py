@@ -522,7 +522,7 @@ This file contains all addresses and sizes of all partitions.
                         help="Path to output file.")
 
     parser.add_argument("-d", "--dynamic-partition", required=False, type=str,
-                        help="Name of dynamic partition ('app' is default). ")
+                        help="Name of dynamic partition")
 
     parser.add_argument("-s", "--static-config", required=False, type=argparse.FileType(mode='r'),
                         help="Path static configuration.")
@@ -605,19 +605,6 @@ def test():
     start, size = get_dynamic_area_start_and_size(test_config, 100)
     assert start == 10
     assert size == 100 - 10
-
-    # Verify that empty placement property throws error
-    td = {'spm': {'placement': {'before': ['app']}, 'size': 100, 'inside': ['mcuboot_slot0']},
-          'mcuboot': {'placement': {'before': ['spm', 'app']}, 'size': 200},
-          'mcuboot_slot0': {'span': ['app']},
-          'invalid': {'placement': {}},
-          'app': {}}
-    failed = False
-    try:
-        s, sub_partitions = resolve(td)
-    except RuntimeError:
-        failed = True
-    assert failed
 
     # Verify that empty placement property throws error
     td = {'spm': {'placement': {'before': ['app']}, 'size': 100, 'inside': ['mcuboot_slot0']},
