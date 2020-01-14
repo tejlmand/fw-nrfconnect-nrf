@@ -158,15 +158,17 @@ foreach(part ${PM_ALL_BY_SIZE})
   endif()
 endforeach()
 
-set(PM_MERGED_SPAN ${implicitly_assigned} ${explicitly_assigned})
-set(merged_overlap TRUE) # Enable overlapping for the merged hex file.
+string(TOUPPER ${domain} DOMAIN)
+set(PM_MERGED_${DOMAIN}_SPAN ${implicitly_assigned} ${explicitly_assigned})
+set(merged_${domain}_overlap TRUE) # Enable overlapping for the merged hex file.
 
 # Iterate over all container partitions, plus the "fake" merged paritition.
 # The loop will create a hex file for each iteration.
-foreach(container ${containers} merged)
+foreach(container ${containers} merged_${domain})
   string(TOUPPER ${container} CONTAINER)
 
   # Prepare the list of hex files and list of dependencies for the merge command.
+  message("Checking PM_${CONTAINER}_SPAN -> ${PM_${CONTAINER}_SPAN}")
   foreach(part ${PM_${CONTAINER}_SPAN})
     string(TOUPPER ${part} PART)
     list(APPEND ${container}hex_files ${${part}_PM_HEX_FILE})
@@ -196,12 +198,6 @@ foreach(container ${containers} merged)
   add_custom_target(${container}_hex ALL DEPENDS ${PROJECT_BINARY_DIR}/${container}.hex)
 endforeach()
 
-# Add merged.hex as the representative hex file for flashing this app.
-if(TARGET flash)
-  add_dependencies(flash merged_hex)
-endif()
-set(ZEPHYR_RUNNER_CONFIG_KERNEL_HEX "${PROJECT_BINARY_DIR}/merged.hex"
-  CACHE STRING "Path to merged image in Intel Hex format" FORCE)
 
 if (CONFIG_SECURE_BOOT AND CONFIG_BOOTLOADER_MCUBOOT)
   # Create symbols for the offsets required for moving test update hex files
@@ -247,8 +243,16 @@ if (is_dynamic_partition_in_domain)  # We are being built as sub image
     PROPERTY       shared_vars
     "set(PM_DOMAINS_${domain}_IMAGES ${prefixed_images})\n"
     )
+
+  set_property(
+    TARGET         zephyr_property_target
+    APPEND_STRING
+    PROPERTY       shared_vars
+    "set(PM_DOMAINS_${domain}_HEX_FILE ${PROJECT_BINARY_DIR}/merged_${domain}.hex)\n"
+    )
 else()
   # This is the root image, generate the global pm_config.h files
+  list(REMOVE_DUPLICATES PM_DOMAINS)
   foreach (d ${PM_DOMAINS})
     # Don't include shared vars from own domain.
     if (NOT ${domain} STREQUAL ${d})
@@ -262,8 +266,16 @@ else()
       list(APPEND header_files ${PM_DOMAINS_${d}_HEADER_FILES})
       list(APPEND prefixed_images ${PM_DOMAINS_${d}_IMAGES})
       list(APPEND pm_out ${PM_DOMAINS_${d}_CONFIG})
+      list(APPEND domain_hex_files ${PM_DOMAINS_${d}_HEX_FILE})
+      message("APPENDED is now ${domain_hex_files}")
+      list(APPEND domain_hex_depends ${PM_${d}_DYNAMIC_PARTITION}_subimage)
     endif()
   endforeach()
+
+  # Add the root domains hex file to the list
+  list(APPEND domain_hex_files ${PROJECT_BINARY_DIR}/merged_${domain}.hex)
+  list(APPEND domain_hex_depends merged_${domain}_hex)
+
   print(prefixed_images)
   print(header_files)
   set(pm_global_output_cmd
@@ -285,4 +297,29 @@ else()
     message(FATAL_ERROR "Partition Manager GLOBAL output generation failed,
     aborting. Command: ${pm_global_output_cmd}")
   endif()
+
+  set(final_merged ${PROJECT_BINARY_DIR}/merged.hex)
+  print(domain_hex_files)
+
+  # Add command to merge files.
+  add_custom_command(
+    OUTPUT ${final_merged}
+    COMMAND
+    ${PYTHON_EXECUTABLE}
+    ${ZEPHYR_BASE}/scripts/mergehex.py
+    -o ${final_merged}
+    ${domain_hex_files}
+    DEPENDS
+    ${domain_hex_depends}
+    )
+
+  # Wrapper target for the merge command.
+  add_custom_target(merged_hex ALL DEPENDS ${final_merged})
+  # Add merged.hex as the representative hex file for flashing this app.
+  if(TARGET flash)
+    add_dependencies(flash merged_hex)
+  endif()
+  set(ZEPHYR_RUNNER_CONFIG_KERNEL_HEX "${final_merged}"
+    CACHE STRING "Path to merged image in Intel Hex format" FORCE)
+
 endif()

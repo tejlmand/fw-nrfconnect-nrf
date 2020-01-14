@@ -20,6 +20,7 @@ function(preprocess_pm_yml in_file out_file)
   if(NOT "${ret}" STREQUAL "0")
     message(FATAL_ERROR "command failed with return code: ${ret}")
   endif()
+
 endfunction()
 
 # We are using partition manager if we are a child image or if we are
