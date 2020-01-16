@@ -65,11 +65,28 @@ function(add_child_image name sourcedir)
     message("Skipping building of ${name}")
   else()
     # Build normally
-    add_child_image_from_source(${name} ${sourcedir})
+    add_child_image_from_source(${name} ${sourcedir} "False")
   endif()
 endfunction()
 
-function(add_child_image_from_source name sourcedir)
+function(create_domain_image name sourcedir)
+  string(TOUPPER ${name} UPNAME)
+
+  if (CONFIG_${UPNAME}_BUILD_STRATEGY_USE_HEX_FILE)
+    assert_exists(CONFIG_${UPNAME}_HEX_FILE)
+    message("Using ${CONFIG_${UPNAME}_HEX_FILE} instead of building ${name}")
+
+    # Set property so that the hex file is merged in by partition manager.
+    set_property(GLOBAL PROPERTY ${name}_PM_HEX_FILE ${CONFIG_${UPNAME}_HEX_FILE})
+  elseif (CONFIG_${UPNAME}_BUILD_STRATEGY_SKIP_BUILD)
+    message("Skipping building of ${name}")
+  else()
+    # Build normally
+    add_child_image_from_source(${name} ${sourcedir} "True")
+  endif()
+endfunction()
+
+function(add_child_image_from_source name sourcedir domain_image)
   # Set ${name}_BOARD based on what BOARD is set to if not already done.
   if (NOT ${name}_BOARD)
     image_board_selection(${BOARD} ${name}_BOARD)
@@ -203,4 +220,17 @@ function(add_child_image_from_source name sourcedir)
       "${name}"
       )
   endif()
+
+  if (${domain_image})
+    add_custom_target(${name}_flash
+                      COMMAND
+                      ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/${name} -- flash
+    )
+
+    set_property(TARGET zephyr_property_target
+                 APPEND PROPERTY FLASH_DEPENDENCIES
+                 ${name}_flash
+  )
+  endif()
+
 endfunction()
