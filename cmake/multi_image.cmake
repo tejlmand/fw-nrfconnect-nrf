@@ -20,6 +20,8 @@ function(share content)
     )
 endfunction()
 
+include(${ZEPHYR_BASE}/../nrf/cmake/extensions.cmake)
+
 if(IMAGE_NAME)
   share("set(${IMAGE_NAME}KERNEL_HEX_NAME ${KERNEL_HEX_NAME})")
   # Share the elf file, in order to support symbol loading for debuggers.
@@ -32,28 +34,7 @@ if(IMAGE_NAME)
     )
 endif(IMAGE_NAME)
 
-function(image_board_selection board_in board_out)
-  # It is assumed that only the root app will be built as non-secure.
-  # This is not a valid assumption as there might be multiple non-secure
-  # images defined.
-  # TODO: Allow multiple non-secure images by using Kconfig to set the
-  # secure/non-secure property rather than using a separate board definition.
-  string(REGEX REPLACE "(_?ns)$" "" board_in_without_suffix ${board_in})
-  if(NOT ${board_in} STREQUAL ${board_in_without_suffix})
-    if (NOT CONFIG_ARM_NONSECURE_FIRMWARE)
-      message(FATAL_ERROR "${board_in} is not a valid name for a board without "
-      "'CONFIG_ARM_NONSECURE_FIRMWARE' set. This because the 'ns'/'_ns' ending "
-      "indicates that the board is the non-secure variant in a TrustZone "
-      "enabled system.")
-    endif()
-    set(${board_out} ${board_in_without_suffix} PARENT_SCOPE)
-    message("Changed board to secure ${board_in_without_suffix} (NOT NS)")
-  else()
-    set(${board_out} ${board_in} PARENT_SCOPE)
-  endif()
-endfunction()
-
-function(add_child_image name sourcedir)
+function(add_sub_image name sourcedir is_domain)
   string(TOUPPER ${name} UPNAME)
 
   if (CONFIG_${UPNAME}_BUILD_STRATEGY_USE_HEX_FILE)
@@ -66,18 +47,38 @@ function(add_child_image name sourcedir)
     message("Skipping building of ${name}")
   else()
     # Build normally
-    add_child_image_from_source(${name} ${sourcedir})
+    add_child_image_from_source(${name} ${sourcedir} ${is_domain})
   endif()
 endfunction()
 
-function(add_child_image_from_source name sourcedir)
-  message("\n=== child image ${name} begin ===")
+function(add_child_image name sourcedir)
+  add_sub_image(${name} ${sourcedir} "False")
+endfunction()
+
+function(create_domain_image name sourcedir)
+  add_sub_image(${name} ${sourcedir} "True")
+endfunction()
+
+function(add_child_image_from_source name sourcedir domain_image)
 
   # Set ${name}_BOARD based on what BOARD is set to if not already set by parent
   if (NOT ${name}_BOARD)
-    image_board_selection(${BOARD} ${name}_BOARD)
+    # It is assumed that only the root app will be built as non-secure.
+    # This is not a valid assumption as there might be multiple non-secure
+    # images defined.
+    # TODO: Allow multiple non-secure images by using Kconfig to set the
+    # secure/non-secure property rather than using a separate board definition.
+    get_board_without_ns_suffix(${BOARD} ${name}_BOARD)
   endif()
 
+  # Add the new partition manager 'domain' if needed.
+  # The 'domain' corresponds to the BOARD without the 'ns' suffix.
+  if (NOT (${${name}_BOARD} IN_LIST PM_DOMAINS))
+    list(APPEND PM_DOMAINS ${${name}_BOARD})
+    share("list(APPEND PM_DOMAINS $${${name}_BOARD})")
+  endif()
+
+  message("\n=== child image ${name} - ${${name}_BOARD} begin ===")
   # Construct a list of variables that, when present in the root
   # image, should be passed on to all child images as well.
   list(APPEND
@@ -90,6 +91,8 @@ function(add_child_image_from_source name sourcedir)
     ZEPHYR_TOOLCHAIN_VARIANT
     GNUARMEMB_TOOLCHAIN_PATH
     EXTRA_KCONFIG_TARGETS
+    PM_DOMAINS
+    ${${name}_BOARD}_PM_DOMAIN_DYNAMIC_PARTITION
     )
 
   foreach(kconfig_target ${EXTRA_KCONFIG_TARGETS})
@@ -152,12 +155,7 @@ function(add_child_image_from_source name sourcedir)
 
   if (IMAGE_NAME)
     # Expose your childrens secrets to your parent
-    set_property(
-      TARGET         zephyr_property_target
-      APPEND_STRING
-      PROPERTY       shared_vars
-      "include(${CMAKE_BINARY_DIR}/${name}/shared_vars.cmake)\n"
-      )
+    share("include(${CMAKE_BINARY_DIR}/${name}/shared_vars.cmake)")
   endif()
 
   set_property(DIRECTORY APPEND PROPERTY
@@ -169,7 +167,7 @@ function(add_child_image_from_source name sourcedir)
     message(FATAL_ERROR "CMake generation for ${name} failed, aborting. Command: ${ret}")
   endif()
 
-  message("=== child image ${name} end ===\n")
+  message("=== child image ${name} - ${${name}_BOARD} end ===\n")
 
   # Include some variables from the child image into the parent image
   # namespace
@@ -178,6 +176,7 @@ function(add_child_image_from_source name sourcedir)
   # Increase the scope of this variable to make it more available
   set(${name}_KERNEL_HEX_NAME ${${name}_KERNEL_HEX_NAME} CACHE STRING "" FORCE)
   set(${name}_KERNEL_ELF_NAME ${${name}_KERNEL_ELF_NAME} CACHE STRING "" FORCE)
+  set(PM_DOMAINS ${PM_DOMAINS} CACHE STRING "" FORCE)
 
   if(MULTI_IMAGE_DEBUG_MAKEFILE AND "${CMAKE_GENERATOR}" STREQUAL "Ninja")
     set(multi_image_build_args "-d" "${MULTI_IMAGE_DEBUG_MAKEFILE}")
@@ -202,6 +201,7 @@ function(add_child_image_from_source name sourcedir)
       guiconfig
       ${EXTRA_KCONFIG_TARGETS}
       )
+
     add_custom_target(${name}_${kconfig_target}
       ${CMAKE_MAKE_PROGRAM} ${kconfig_target}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${name}
@@ -209,9 +209,25 @@ function(add_child_image_from_source name sourcedir)
       )
   endforeach()
 
-  set_property(
-    GLOBAL APPEND PROPERTY
-    PM_IMAGES
-    "${name}"
+  if (NOT "${name}" STREQUAL "${${${name}_BOARD}_PM_DOMAIN_DYNAMIC_PARTITION}")
+    set_property(
+      GLOBAL APPEND PROPERTY
+      PM_IMAGES
+      "${name}"
+      )
+  endif()
+
+  if (${domain_image})
+    add_custom_target(${name}_flash
+                      COMMAND
+                      ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/${name}
+                      --target flash
     )
+
+    set_property(TARGET zephyr_property_target
+                 APPEND PROPERTY FLASH_DEPENDENCIES
+                 ${name}_flash
+  )
+  endif()
+
 endfunction()
