@@ -4,21 +4,18 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-set(pm_config
-  "$<$<TARGET_EXISTS:partition_manager>:$<TARGET_PROPERTY:partition_manager,PM_CONFIG_FILES>>")
-
-set(pm_depends
-  "$<<$<TARGET_EXISTS:partition_manager>:$<TARGET_PROPERTY:partition_manager,PM_DEPENDS>>")
-
 add_custom_target(
   partition_manager_report
   COMMAND
   ${PYTHON_EXECUTABLE}
+  # If partition manager does not exist, this line of code will cause python to
+  # simply print an empty line when running:
+  # ninja partition_manager_report
+  $<$<NOT:$<BOOL:$<TARGET_PROPERTY:partition_manager,ENABLED>>>:-cprint>
   ${ZEPHYR_BASE}/../nrf/scripts/partition_manager_report.py
-  --input ${pm_config}
-  "$<$<NOT:$<TARGET_EXISTS:partition_manager>>:--quiet>"
+  --input $<TARGET_PROPERTY:partition_manager,PM_CONFIG_FILES>
   DEPENDS
-  ${pm_depends}
+  $<TARGET_PROPERTY:partition_manager,PM_DEPENDS>
   )
 
 set_property(TARGET zephyr_property_target

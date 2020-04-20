@@ -62,10 +62,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Parse given Partition Manager output YAML file and print a pretty report',
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-i", "--input", required=True, type=str, nargs="*",
+    parser.add_argument("-i", "--input", required=True, type=str, nargs="+",
                         help="Path to the domain specific YAML files from Partition Manager")
-    parser.add_argument("-q", "--quiet", required=False, action='store_true',
-                        help="Don't print anything")
 
     args = parser.parse_args()
 
@@ -74,9 +72,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
-    if args.quiet:
-        sys.exit(0)
 
     for i in args.input:
         fn = path.basename(i)

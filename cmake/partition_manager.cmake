@@ -59,6 +59,10 @@ endif()
 
 get_property(PM_IMAGES GLOBAL PROPERTY PM_IMAGES)
 
+# Create a dummy target that we can add properties to for
+# extraction in generator expressions.
+add_custom_target(partition_manager)
+
 # This file is executed once per domain.
 #
 # It will be executed if one of the following criteria is true for the
@@ -202,13 +206,11 @@ execute_process(
   RESULT_VARIABLE ret
   )
 
+set_property(TARGET partition_manager PROPERTY ENABLED True)
+
 if(NOT ${ret} EQUAL "0")
   message(FATAL_ERROR "Partition Manager output generation failed, aborting. Command: ${pm_output_cmd}")
 endif()
-
-# Create a dummy target that we can add properties to for
-# extraction in generator expressions.
-add_custom_target(partition_manager)
 
 # Make Partition Manager configuration available in CMake
 import_kconfig(PM_ ${pm_out_dotconf_files} pm_var_names)
