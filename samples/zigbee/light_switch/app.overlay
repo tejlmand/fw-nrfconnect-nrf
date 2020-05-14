@@ -6,6 +6,12 @@
 /delete-node/ &scratch_partition;
 /delete-node/ &storage_partition;
 
+/ {
+	chosen {
+		zephyr,entropy = &rng;
+	};
+};
+
 &flash0 {
 	partitions {
 		compatible = "fixed-partitions";
