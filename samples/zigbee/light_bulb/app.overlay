@@ -32,7 +32,7 @@
 };
 
 / {
-    pwmleds {
+	pwmleds {
 		pwm_led3: pwm_led_3 {
 			pwms = <&pwm0 16>;
 		};
