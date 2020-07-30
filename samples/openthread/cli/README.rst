@@ -18,6 +18,9 @@ This sample comes with the :ref:`full set of OpenThread functionalities <thread_
 If used alone, the sample allows you to test the network status.
 It is recommended to use at least two development kits running the same sample to be able to test communication.
 
+An additional functionality of this particular sample is the possibility of updating OpenThread libraries
+with the version compiled from the current source.
+
 See :ref:`ug_thread_cert` for information on how to use this sample on Thread Certification Test Harness.
 
 Requirements
@@ -45,6 +48,8 @@ Building and running
 |enable_thread_before_testing|
 
 .. include:: /includes/build_and_run.txt
+
+To update OpenThread libraries provided by the ``nrfxlib`` with the currently built ones please invoke ``ninja -C build/ install_openthread_libraries`` after building the CLI example from source.
 
 Testing
 =======
