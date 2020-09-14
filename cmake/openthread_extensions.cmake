@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
-set(NRFXLIB_DIR $ENV{ZEPHYR_BASE}/../nrfxlib)
+set(NRFXLIB_DIR ${ZEPHYR_NRFXLIB_MODULE_DIR})
 assert_exists(NRFXLIB_DIR)
 include(${NRFXLIB_DIR}/common.cmake)
 
@@ -13,23 +13,8 @@ set(OT_WORK_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # Store the configuration of the compiled OpenThread libraries
 # and set source and destination paths.
 function(openthread_libs_configuration_write)
-  unset(OPENTHREAD_SRC_DIR CACHE)
-  unset(OPENTHREAD_CONFIG_FILE CACHE)
-  unset(OPENTHREAD_LIB_FTD CACHE)
-  unset(OPENTHREAD_LIB_MTD CACHE)
-  unset(OPENTHREAD_LIB_RADIO CACHE)
-  unset(OPENTHREAD_LIB_CLI_FTD CACHE)
-  unset(OPENTHREAD_LIB_CLI_MTD CACHE)
-  unset(OPENTHREAD_LIB_NCP_FTD CACHE)
-  unset(OPENTHREAD_LIB_NCP_MTD CACHE)
-  unset(OPENTHREAD_LIB_RCP CACHE)
-  unset(OPENTHREAD_DST_DIR CACHE)
-
-  message(STATUS "OPENTHREAD_SRC_DIR=${OPENTHREAD_SRC_DIR}")
   set(OPENTHREAD_SRC_DIR "${CMAKE_BINARY_DIR}/modules/openthread/build/src"
     CACHE STRING "Directory containg the OpenThread source code.")
-  message(STATUS "CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}")
-  message(STATUS "OPENTHREAD_SRC_DIR=${OPENTHREAD_SRC_DIR}")
 
   find_package(Git QUIET)
   if(GIT_FOUND)
@@ -57,31 +42,6 @@ function(openthread_libs_configuration_write)
     CACHE STRING "File containg OpenThread build configuration parameters.")
   FILE(WRITE ${OPENTHREAD_CONFIG_FILE} ${OPENTHREAD_SETTINGS})
 
-  set(OPENTHREAD_LIB_FTD "${OPENTHREAD_SRC_DIR}/core/libopenthread-ftd.a"
-    CACHE STRING "FTD")
-  message(STATUS "OPENTHREAD_LIB_FTD=${OPENTHREAD_LIB_FTD}")
-
-  set(OPENTHREAD_LIB_MTD "${OPENTHREAD_SRC_DIR}/core/libopenthread-mtd.a"
-    CACHE STRING "MTD")
-
-  set(OPENTHREAD_LIB_RADIO "${OPENTHREAD_SRC_DIR}/core/libopenthread-radio.a"
-    CACHE STRING "RADIO")
-
-  set(OPENTHREAD_LIB_CLI_FTD "${OPENTHREAD_SRC_DIR}/cli/libopenthread-cli-ftd.a"
-    CACHE STRING "CLI-FTD")
-
-  set(OPENTHREAD_LIB_CLI_MTD "${OPENTHREAD_SRC_DIR}/cli/libopenthread-cli-mtd.a"
-    CACHE STRING "CLI-MTD")
-
-  set(OPENTHREAD_LIB_NCP_FTD "${OPENTHREAD_SRC_DIR}/ncp/libopenthread-ncp-ftd.a"
-    CACHE STRING "NCP-FTD")
-
-  set(OPENTHREAD_LIB_NCP_MTD "${OPENTHREAD_SRC_DIR}/ncp/libopenthread-ncp-mtd.a"
-    CACHE STRING "NCP-MTD")
-
-  set(OPENTHREAD_LIB_RCP "${OPENTHREAD_SRC_DIR}/ncp/libopenthread-rcp.a"
-    CACHE STRING "RCP")
-
   nrfxlib_calculate_lib_path(lib_path)
 
   set(OPENTHREAD_DST_DIR
@@ -97,14 +57,14 @@ if(CONFIG_NET_L2_OPENTHREAD AND CONFIG_OPENTHREAD_SOURCES)
 
   add_custom_target(install_openthread_libraries
     COMMAND ${CMAKE_COMMAND} -E make_directory "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_FTD}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_MTD}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_RADIO}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_CLI_FTD}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_CLI_MTD}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_NCP_FTD}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_NCP_MTD}" "${OPENTHREAD_DST_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${OPENTHREAD_LIB_RCP}" "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-ftd> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-mtd> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-radio> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-cli-ftd> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-cli-mtd> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-ncp-ftd> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-ncp-mtd> "${OPENTHREAD_DST_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:openthread-rcp> "${OPENTHREAD_DST_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
       ${OPENTHREAD_HEADERS_DIR}
       ${NRFXLIB_DIR}/openthread/include
@@ -114,8 +74,4 @@ if(CONFIG_NET_L2_OPENTHREAD AND CONFIG_OPENTHREAD_SOURCES)
     DEPENDS ${OPENTHREAD_LIB_FTD}
     )
 
-    set_property(TARGET zephyr_property_target
-    APPEND PROPERTY install_openthread_libraries_DEPENDENCIES
-    install_openthread_libraries
-    )
 endif()
