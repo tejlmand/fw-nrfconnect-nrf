@@ -191,7 +191,7 @@ static void toggle_minimal_sleepy_end_device(struct k_work *item)
 	otLinkModeConfig mode = otThreadGetLinkMode(instance);
 
 #if IS_ENABLED(CONFIG_DEVICE_POWER_MANAGEMENT)
-	struct device *cons = device_get_binding(CONSOLE_LABEL);
+	const struct device *cons = device_get_binding(CONSOLE_LABEL);
 #endif
 
 	if (mode.mRxOnWhenIdle) {
