@@ -522,4 +522,22 @@ else()
   set(ZEPHYR_RUNNER_CONFIG_KERNEL_HEX "${final_merged}"
     CACHE STRING "Path to merged image in Intel Hex format" FORCE)
 
+  # Zephyr has a Kconfig option used for signing an application image
+  # with MCUboot using west sign. If partition manager is in use and
+  # there are multiple images, we want to make sure users understand
+  # this option should probably be left alone, since the NCS build
+  # system has its own way of managing signing.
+  get_property(NCS_WARNED_ON_MCUBOOT_SIGNATURE_KEY_FILE GLOBAL PROPERTY
+    NCS_WARNED_ON_MCUBOOT_SIGNATURE_KEY_FILE SET)
+  if (CONFIG_BOOTLOADER_MCUBOOT AND CONFIG_MCUBOOT_SIGNATURE_KEY_FILE)
+    message(WARNING
+      "CONFIG_MCUBOOT_SIGNATURE_KEY_FILE is set to \"${CONFIG_MCUBOOT_SIGNATURE_KEY_FILE}\".
+You are using the NCS Partition Manager, which means this option should \
+ probably be disabled.
+Image signing in NCS is done via the MCUboot image's \
+ CONFIG_BOOT_SIGNATURE_KEY_FILE option.
+Consider setting CONFIG_MCUBOOT_SIGNATURE_KEY_FILE in your application image\
+ back to its default value, the empty string.")
+    set_property(GLOBAL PROPERTY NCS_WARNED_ON_MCUBOOT_SIGNATURE_KEY_FILE TRUE)
+  endif()
 endif()
