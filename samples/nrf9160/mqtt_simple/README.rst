@@ -171,7 +171,7 @@ This sample uses the following |NCS| libraries:
 
 It uses the following `sdk-nrfxlib`_ libraries:
 
-* :ref:`nrfxlib:bsdlib`
+* :ref:`nrfxlib:nrf_modem`
 
 It uses the following Zephyr libraries:
 

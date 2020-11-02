@@ -7,13 +7,13 @@
 #include <zephyr.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if defined(CONFIG_BSD_LIB)
+#if defined(CONFIG_NRF_MODEM_LIB)
 #include <modem/lte_lc.h>
-#include <modem/bsdlib.h>
+#include <modem/nrf_modem_lib.h>
 #include <modem/at_cmd.h>
 #include <modem/at_notif.h>
 #include <modem/modem_info.h>
-#include <bsd.h>
+#include <nrf_modem.h>
 #endif
 #include <net/aws_iot.h>
 #include <power/reboot.h>
@@ -83,7 +83,7 @@ static int shadow_update(bool version_number_include)
 		return err;
 	}
 
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 	/* Request battery voltage data from the modem. */
 	err = modem_info_short_get(MODEM_INFO_BATTERY, &bat_voltage);
 	if (err != sizeof(bat_voltage)) {
@@ -235,7 +235,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 			printk("Persistent session enabled\n");
 		}
 
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 		/** Successfully connected to AWS IoT broker, mark image as
 		 *  working to avoid reverting to the former image upon reboot.
 		 */
@@ -252,7 +252,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 		k_delayed_work_submit(&shadow_update_work,
 				K_SECONDS(CONFIG_PUBLICATION_INTERVAL_SECONDS));
 
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 		int err = lte_lc_psm_req(true);
 		if (err) {
 			printk("Requesting PSM failed, error: %d\n", err);
@@ -283,7 +283,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 	case AWS_IOT_EVT_FOTA_ERASE_PENDING:
 		printk("AWS_IOT_EVT_FOTA_ERASE_PENDING\n");
 		printk("Disconnect LTE link or reboot\n");
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 		err = lte_lc_offline();
 		if (err) {
 			printk("Error disconnecting from LTE\n");
@@ -293,7 +293,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 	case AWS_IOT_EVT_FOTA_ERASE_DONE:
 		printk("AWS_FOTA_EVT_ERASE_DONE\n");
 		printk("Reconnecting the LTE link");
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 		err = lte_lc_connect();
 		if (err) {
 			printk("Error connecting to LTE\n");
@@ -326,7 +326,7 @@ static void work_init(void)
 			    shadow_update_version_work_fn);
 }
 
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 static void lte_handler(const struct lte_lc_evt *const evt)
 {
 	switch (evt->type) {
@@ -398,11 +398,11 @@ static void at_configure(void)
 	__ASSERT(err == 0, "AT CMD could not be established.");
 }
 
-static void bsd_lib_modem_dfu_handler(void)
+static void nrf_modem_lib_dfu_handler(void)
 {
 	int err;
 
-	err = bsdlib_init();
+	err = nrf_modem_lib_init();
 
 	switch (err) {
 	case MODEM_DFU_RESULT_OK:
@@ -483,8 +483,8 @@ void main(void)
 
 	cJSON_Init();
 
-#if defined(CONFIG_BSD_LIBRARY)
-	bsd_lib_modem_dfu_handler();
+#if defined(CONFIG_NRF_MODEM_LIB)
+	nrf_modem_lib_dfu_handler();
 #endif
 
 	err = aws_iot_init(NULL, aws_iot_event_handler);
@@ -503,7 +503,7 @@ void main(void)
 	}
 
 	work_init();
-#if defined(CONFIG_BSD_LIBRARY)
+#if defined(CONFIG_NRF_MODEM_LIB)
 	modem_configure();
 
 	err = modem_info_init();

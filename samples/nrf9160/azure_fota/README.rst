@@ -89,9 +89,9 @@ After programming the sample to your development kit, test it by performing the 
       *** Booting Zephyr OS build v2.3.0-rc1-ncs1-1453-gf41496cd30d5  ***
       Traces enabled
       Azure FOTA sample started
-      Initializing BSDlib
+      Initializing Modem library
       This may take a while if a modem firmware update is pending
-      BSDlib initialized
+      Modem library initialized
       Connecting to LTE network
       AZURE_IOT_HUB_EVT_CONNECTING
       AZURE_IOT_HUB_EVT_CONNECTED
@@ -151,7 +151,7 @@ This sample uses the following |NCS| libraries:
 
 It uses the following `sdk-nrfxlib`_ libraries:
 
-* :ref:`nrfxlib:bsdlib`
+* :ref:`nrfxlib:nrf_modem`
 
 
 It uses the following Zephyr libraries:
