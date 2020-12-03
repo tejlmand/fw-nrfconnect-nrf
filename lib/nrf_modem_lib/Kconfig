@@ -3,6 +3,17 @@
 # SPDX-License-Identifier: LicenseRef-BSD-5-Clause-Nordic
 #
 
+config BSD_LIBRARY
+	bool
+	prompt "Use BSD Socket library for IP/TLS/DTLS (deprecated)"
+	select NRF_MODEM_LIB
+	help
+	  BSD_LIBRARY is deprecated, please use NRF_MODEM_LIB instead.
+
+if BSD_LIBRARY
+	comment "BSD_LIBRARY is deprecated, please use NRF_MODEM_LIB instead."
+endif
+
 menuconfig NRF_MODEM_LIB
 	bool "Enable Modem library"
 	imply NRFX_IPC
@@ -55,5 +66,22 @@ config NRF_MODEM_LIB_SENDMSG_BUF_SIZE
 	  in a static memory, so it does not impact stack/heap usage. In case
 	  the repacked message would not fit into the buffer, `sendmsg` sends
 	  each message part separately.
+
+if BSD_LIBRARY
+
+comment "BSD_LIBRARY settings (Deprecated)."
+
+config BSD_LIBRARY_TRACE_ENABLED
+	bool
+	prompt "BSD_LIB: Enable proprietary traces over UART (deprecated)"
+	select NRF_MODEM_LIB_TRACE_ENABLED
+	help
+	  BSD_LIBRARY_TRACE_ENABLED is deprecated, please use NRF_MODEM_LIB_TRACE_ENABLED instead.
+
+if BSD_LIBRARY_TRACE_ENABLED
+	comment	"BSD_LIBRARY_TRACE_ENABLED is deprecated, please use NRF_MODEM_LIB_TRACE_ENABLED instead."
+endif
+
+endif # BSD_LIBRARY
 
 endif # NRF_MODEM_LIB
