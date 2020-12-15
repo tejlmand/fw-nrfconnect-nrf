@@ -17,41 +17,32 @@ menuconfig EDGE_IMPULSE
 
 if EDGE_IMPULSE
 
-choice
-	prompt "Select Edge Impulse library source"
-	default EDGE_IMPULSE_BUILD_FROM_ZIP
-
-config EDGE_IMPULSE_BUILD_FROM_ZIP
-	bool "Build Edge Impulse library from provided zip file"
+config APP_LINK_WITH_EDGE_IMPULSE
+	bool "Link 'app' with Edge Impulse"
+	default y
 	help
-	  Make sure to specify the zip path as EDGE_IMPULSE_ZIP_PATH Kconfig
-	  option.
+	  Add Edge Impulse header files to the 'app' include path. It may be
+	  disabled if the include paths for Edge Impulse are causing aliasing
+	  issues for 'app'.
 
-config EDGE_IMPULSE_BUILD_FROM_URI
-	bool "Download Edge Impulse library from URI and build it"
+config EDGE_IMPULSE_DOWNLOAD_ALWAYS
+	bool "Download Edge Impulse library on each build"
+	default y
 	help
-	  Make sure to specify the URI as EDGE_IMPULSE_DOWNLOAD_URI Kconfig
-	  option and provide API key header as EI_API_KEY_HEADER variable
-	  during build (if required by the HTTP server).
-
-endchoice
-
-config EDGE_IMPULSE_ZIP_PATH
-	string "Edge Impulse library zip path"
-	depends on EDGE_IMPULSE_BUILD_FROM_ZIP
-	default ''
-	help
-	  Specify path for zip file containing the Edge Impulse library.
-	  Path is relative to application source directory.
+	  Request the build system to download the Edge Impulse library on each
+	  build. This results in the build target to always be considered out
+	  of date.
+	  If the re-downloaded zip has no code changes, then no re-building of
+	  source is performed and only download of zip file will be done.
 
 config EDGE_IMPULSE_DOWNLOAD_URI
 	string "Edge Impulse library download URI"
-	depends on EDGE_IMPULSE_BUILD_FROM_URI
 	default ''
 	help
 	  Specify URI used to download archive with Edge Impulse library.
 	  The library will be downloaded into build directory. Make sure
 	  to specify the HTTP API key header as EI_API_KEY_HEADER variable
 	  during build if the HTTP server uses it.
+	  A local file can be specified as: file:///path/to/edge_impulse.zip.
 
 endif # EDGE_IMPULSE
