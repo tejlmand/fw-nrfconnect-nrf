@@ -33,6 +33,12 @@ manifest:
       url-base: https://github.com/nanopb
     - name: alexa
       url-base: https://github.com/alexa
+    - name: connectedhomeip
+      url-base: https://github.com/project-chip
+    - name: nestlabs
+      url-base: https://github.com/nestlabs
+    - name: pigweed
+      url-base: https://pigweed.googlesource.com/pigweed
 
   # If not otherwise specified, the projects below should be obtained
   # from the ncs remote.
@@ -107,6 +113,10 @@ manifest:
       repo-path: sdk-trusted-firmware-m
       path: modules/tee/tfm
       revision: dcfa70e66e91d9bf31fd6f083e2fba19b4305f4e
+    - name: connectedhomeip
+      repo-path: sdk-connectedhomeip
+      path: modules/lib/connectedhomeip
+      revision: b430c424ab62438fffae71c9bd2f23d3f0d442d2
     # Other third-party repositories.
     - name: cmock
       path: test/cmock
@@ -129,6 +139,20 @@ manifest:
       path: modules/alexa-embedded
       revision: face92d8c62184832793f518bb1f19379538c5c1
       remote: alexa
+    # TODO: Add below remotes as submodules to the connectedhomeip
+    # after merging west submodules feature
+    - name: nlio
+      revision: 5bc9ff0
+      path: modules/lib/connectedhomeip/third_party/nlio/repo
+      remote: nestlabs
+    - name: nlassert
+      revision: bd2f082
+      path: modules/lib/connectedhomeip/third_party/nlassert/repo
+      remote: nestlabs
+    - name: pigweed
+      revision: 5a4db08b
+      path: modules/lib/connectedhomeip/third_party/pigweed/repo
+      remote: pigweed
 
   # West-related configuration for the nrf repository.
   self:
