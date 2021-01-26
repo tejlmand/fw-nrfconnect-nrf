@@ -39,6 +39,8 @@ manifest:
       url-base: https://github.com/nestlabs
     - name: pigweed
       url-base: https://pigweed.googlesource.com/pigweed
+    - name: tejlmand
+      url-base: https://github.com/tejlmand
 
   # If not otherwise specified, the projects below should be obtained
   # from the ncs remote.
@@ -55,8 +57,9 @@ manifest:
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/introduction/index.html
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
     - name: zephyr
-      repo-path: sdk-zephyr
-      revision: 3420cde0e37be536cda67f293784dcc1c6a92001
+      repo-path: fw-nrfconnect-zephyr-1.git
+      revision: refs/heads/review/3670_proposal
+      remote: tejlmand
       import:
         # In addition to the zephyr repository itself, NCS also
         # imports the contents of zephyr/west.yml at the above
@@ -116,7 +119,8 @@ manifest:
     - name: connectedhomeip
       repo-path: sdk-connectedhomeip
       path: modules/lib/connectedhomeip
-      revision: b430c424ab62438fffae71c9bd2f23d3f0d442d2
+      revision: refs/heads/review/3670_proposal
+      remote: tejlmand
     # Other third-party repositories.
     - name: cmock
       path: test/cmock
