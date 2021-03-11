@@ -39,7 +39,7 @@ manifest:
   defaults:
     remote: ncs
 
-  group-filter: [-homekit]
+  group-filter: [-homekit, -nrf-802154]
 
   # "projects" is a list of git repositories which make up the NCS
   # source code.
@@ -52,7 +52,7 @@ manifest:
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
     - name: zephyr
       repo-path: sdk-zephyr
-      revision: 54dea0b2b5309098c388a836fe9b152318592495
+      revision: pull/481/head
       import:
         # In addition to the zephyr repository itself, NCS also
         # imports the contents of zephyr/west.yml at the above
@@ -150,6 +150,12 @@ manifest:
       revision: 6f257f34b84e494bc18202e8c6411e6be4cc81aa
       groups:
       - homekit
+    - name: nrf-802154
+      repo-path: sdk-nrf-802154
+      path: nrf-802154
+      revision: pull/1/head
+      groups:
+      - nrf-802154
 
   # West-related configuration for the nrf repository.
   self:
