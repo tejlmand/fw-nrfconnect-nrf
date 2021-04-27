@@ -7,7 +7,27 @@
 # The purpose of this file is to override and extend settings related to
 # building Pelion cloud client library.
 
+config MBEDTLS_PROMPTLESS
+	bool
+	default y if !CUSTOM_PELION_SECURITY
+
+config NORDIC_SECURITY_PROMPTLESS
+	bool
+	default y if !CUSTOM_PELION_SECURITY
+
+config OPENTHREAD_SECURITY_INTERNAL
+	bool
+	default y if PELION_MBEDTLS || PELION_NRF_SECURITY
+
 if PELION_SOURCES
+
+config MBEDTLS_PROMPTLESS
+	bool
+	default y if !CUSTOM_PELION_SECURITY
+
+config NORDIC_SECURITY_PROMPTLESS
+	bool
+	default y if !CUSTOM_PELION_SECURITY
 
 menu "Pelion Device Management Client Library"
 
@@ -23,9 +43,18 @@ config MBEDTLS_SSL_MAX_CONTENT_LEN
 	int
 	default 4096
 
+choice
+	prompt "Pelion Security"
+
+config CUSTOM_PELION_SECURITY
+	bool "Custom"
+	help
+	  Custom security settings. Choosing this setting will allow for user
+	  specific control of all security related settings.
+
 config PELION_NRF_SECURITY
-	bool "Enable nrf_security module for OpenThread"
-	depends on !PELION_MBEDTLS
+	bool "nRF Security"
+	select OPENTHREAD_NRF_SECURITY
 	select MBEDTLS_TLS_LIBRARY
 	select MBEDTLS_X509_LIBRARY
 	select MBEDTLS_CIPHER_MODE_CBC
@@ -66,7 +95,9 @@ config PELION_NRF_SECURITY
 	  Default mbedtls configuration for Pelion.
 
 config PELION_MBEDTLS
-	bool "Enable built-in mbedtls for use with Pelion"
+	bool "mbedTLS built-in"
+	select OPENTHREAD_MBEDTLS
+	select MBEDTLS_CFG_FILE_PROMPT_OFF
 	select MBEDTLS
 	select MBEDTLS_USER_CONFIG_ENABLE
 	select MBEDTLS_TLS_VERSION_1_2
@@ -92,6 +123,8 @@ config PELION_MBEDTLS
 	select MBEDTLS_MAC_SHA256_ENABLED
 	help
 	  Default mbedtls configuration for Pelion.
+
+endchoice
 
 config PELION_MBEDTLS_LIB_NAME
 	string
