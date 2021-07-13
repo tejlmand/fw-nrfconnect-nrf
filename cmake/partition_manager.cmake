@@ -26,8 +26,16 @@ set(user_def_pm_static ${PM_STATIC_YML_FILE})
 set(nodomain_pm_static ${APPLICATION_SOURCE_DIR}/pm_static.yml)
 set(domain_pm_static ${APPLICATION_SOURCE_DIR}/pm_static_${DOMAIN}.yml)
 
+ncs_file(CONF_FILES ${APPLICATION_SOURCE_DIR}
+         PM board_pm_static
+         DOMAIN ${DOMAIN}
+         BUILD ${CONF_FILE_BUILD_TYPE}
+)
+
 if(EXISTS "${user_def_pm_static}" AND NOT IS_DIRECTORY "${user_def_pm_static}")
   set(static_configuration_file ${user_def_pm_static})
+elseif (EXISTS ${board_pm_static})
+  set(static_configuration_file ${board_pm_static})
 elseif (EXISTS ${domain_pm_static})
   set(static_configuration_file ${domain_pm_static})
 elseif (EXISTS ${nodomain_pm_static})
@@ -35,6 +43,9 @@ elseif (EXISTS ${nodomain_pm_static})
 endif()
 
 if (EXISTS ${static_configuration_file})
+  message(STATUS "Found partition manager static configuration: "
+                 "${static_configuration_file}"
+  )
   set(static_configuration --static-config ${static_configuration_file})
 endif()
 
