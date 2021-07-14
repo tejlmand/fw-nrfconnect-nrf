@@ -10,7 +10,7 @@ option(NRF21540EK_FEM "Enable support for the nRF21540-EK FEM." OFF)
 
 if(NRF21540EK_FEM)
   set(DTC_OVERLAY_FILE
-    "${CMAKE_CURRENT_SOURCE_DIR}/configuration/dts-nrf21540-fem.overlay"
+    "${CMAKE_CURRENT_SOURCE_DIR}/dts-nrf21540-fem.overlay"
     CACHE STRING "" FORCE)
 
   if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/boards/${BOARD}.overlay")
@@ -24,12 +24,13 @@ project(NONE)
 
 # Application sources
 target_sources_ifdef(CONFIG_NRF21540_FEM app
-	PRIVATE ../../bluetooth/direct_test_mode/src/fem/nrf21540.c)
+  PRIVATE ../../bluetooth/direct_test_mode/src/fem/nrf21540.c
+)
 zephyr_include_directories(../../bluetooth/direct_test_mode/src/fem/)
 
 FILE(GLOB app_sources src/*.c)
 # NORDIC SDK APP START
 target_sources(app PRIVATE
-	${app_sources}
+  ${app_sources}
 )
 # NORDIC SDK APP END
