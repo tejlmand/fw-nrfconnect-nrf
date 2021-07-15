@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
 #
+cmake_minimum_required(VERSION 3.15)
 
 macro(add_region)
   set(oneValueArgs NAME SIZE BASE PLACEMENT DEVICE DYNAMIC_PARTITION)
