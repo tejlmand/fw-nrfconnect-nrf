@@ -329,7 +329,6 @@ if(CONFIG_BOOTLOADER_MCUBOOT)
         )
 
       generate_dfu_zip(
-        TARGET signed_s1_target
         OUTPUT ${PROJECT_BINARY_DIR}/dfu_mcuboot.zip
         BIN_FILES ${s0_bin_path} ${s1_bin_path}
         TYPE mcuboot
