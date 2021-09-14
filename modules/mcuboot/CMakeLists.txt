@@ -3,6 +3,11 @@ add_subdirectory(${ZEPHYR_MCUBOOT_MODULE_DIR}/boot/bootutil/zephyr
 )
 
 if (CONFIG_MCUBOOT)
+
+  if(CONFIG_BOOT_IMAGE_ACCESS_HOOKS AND CONFIG_SOC_NRF5340_CPUAPP)
+    target_sources(mcuboot_util PRIVATE hooks/nrf53_hooks.c)
+  endif()
+
   if (CONFIG_NRF53_MULTI_IMAGE_UPDATE)
     set_shared(IMAGE ${IMAGE_NAME} PROPERTY NRF53_MULTI_IMAGE_UPDATE
       ${CONFIG_NRF53_MULTI_IMAGE_UPDATE})
@@ -23,6 +28,10 @@ if (CONFIG_MCUBOOT)
 endif()
 
 if(CONFIG_BOOTLOADER_MCUBOOT)
+
+  if(CONFIG_BOOT_IMAGE_ACCESS_HOOKS AND CONFIG_SOC_NRF5340_CPUAPP)
+    target_sources(mcuboot_util PRIVATE hooks/nrf53_hooks.c)
+  endif()
 
   include(${ZEPHYR_BASE}/../nrf/cmake/fw_zip.cmake)
 

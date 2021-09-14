@@ -38,11 +38,6 @@ config NORDIC_QSPI_NOR_FLASH_LAYOUT_PAGE_SIZE
 	  chosen Zephyr flash devicetree node to ensure that swapping can be
 	  performed.
 
-config BOOT_IMAGE_ACCESS_HOOKS_FILE
-	string
-	default "${ZEPHYR_NRF_MODULE_DIR}/modules/mcuboot/hooks/nrf53_hooks.c"
-	depends on BOOT_IMAGE_ACCESS_HOOKS
-
 config BOOT_IMAGE_ACCESS_HOOKS
 	bool
 	default y if UPDATEABLE_IMAGE_NUMBER > 1 && SOC_NRF5340_CPUAPP && PM_EXTERNAL_FLASH_MCUBOOT_SECONDARY
