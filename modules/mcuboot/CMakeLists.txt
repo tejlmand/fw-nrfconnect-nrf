@@ -36,10 +36,7 @@ if(CONFIG_BOOTLOADER_MCUBOOT)
 
     add_custom_command(
       OUTPUT
-      ${update_bin}            # Signed binary of input hex.
       ${signed_hex}            # Signed hex of input hex.
-      ${test_update_hex}       # Signed hex with IMAGE_MAGIC
-      ${moved_test_update_hex} # Signed hex with IMAGE_MAGIC located at secondary slot
 
       COMMAND
       # Create signed hex file from input hex file.
@@ -49,6 +46,14 @@ if(CONFIG_BOOTLOADER_MCUBOOT)
       ${sign_cmd}
       ${SIGN_ARG_SIGNED_BIN_FILE_IN}
       ${signed_hex}
+
+      DEPENDS
+      ${SIGN_ARG_DEPENDS}
+	)
+
+    add_custom_command(
+      OUTPUT
+      ${update_bin}            # Signed binary of input hex.
 
       COMMAND
       # Create binary version of the input hex file, this is done so that we
@@ -66,6 +71,14 @@ if(CONFIG_BOOTLOADER_MCUBOOT)
       ${sign_cmd}
       ${to_sign_bin}
       ${update_bin}
+      DEPENDS
+      ${SIGN_ARG_DEPENDS}
+	)
+
+    add_custom_command(
+      OUTPUT
+      ${test_update_hex}       # Signed hex with IMAGE_MAGIC
+      ${moved_test_update_hex} # Signed hex with IMAGE_MAGIC located at secondary slot
 
       COMMAND
       # Create signed hex file from input hex file *with* IMAGE_MAGIC.
