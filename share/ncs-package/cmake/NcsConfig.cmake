@@ -62,7 +62,12 @@ if(NOT NO_BOILERPLATE)
   include(${NRF_DIR}/cmake/boilerplate.cmake NO_POLICY_SCOPE)
 endif()
 
+cmake_parse_arguments(COMPONENTS "" "Zephyr" "" "${Ncs_FIND_COMPONENTS}")
+if(DEFINED COMPONENTS_Zephyr AND Ncs_FIND_VERSION_EXACT)
+  list(APPEND COMPONENTS_Zephyr EXACT)
+endif()
+
 if("${CMAKE_FIND_PACKAGE_NAME}" STREQUAL Ncs)
   # nRF Connect SDK has been included using `find_package(NCS)` so let's find Zephyr.
-  find_package(Zephyr REQUIRED)
+  find_package(Zephyr ${COMPONENTS_Zephyr} REQUIRED)
 endif()
