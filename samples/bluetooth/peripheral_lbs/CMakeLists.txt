@@ -9,7 +9,8 @@ set(PM_STATIC_YML_FILE
   ${CMAKE_CURRENT_SOURCE_DIR}/boards/pm_static_${BOARD}.yml
   )
 
-find_package(Ncs 1.7.99.2 EXACT REQUIRED)
+find_package(Ncs 1.7.99.3 EXACT REQUIRED COMPONENTS Zephyr 2.6.99)
+
 project(NONE)
 
 # NORDIC SDK APP START
