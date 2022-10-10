@@ -9,7 +9,10 @@ set(IMAGE_NAME ${APPLICATION})
 endif()
 
 if(IMAGE_NAME)
-  set_shared(IMAGE ${IMAGE_NAME} PROPERTY KERNEL_HEX_NAME ${KERNEL_HEX_NAME})
+#  No longer needed, just add it to the CMakeCache
+#  set_shared(IMAGE ${IMAGE_NAME} PROPERTY KERNEL_HEX_NAME ${KERNEL_HEX_NAME})
+  set(KERNEL_HEX_NAME ${KERNEL_HEX_NAME} CACHE INTERNAL "shared var replacement")
+
   set_shared(IMAGE ${IMAGE_NAME} PROPERTY ZEPHYR_BINARY_DIR ${ZEPHYR_BINARY_DIR})
   # Share the elf file, in order to support symbol loading for debuggers.
   set_shared(IMAGE ${IMAGE_NAME} PROPERTY KERNEL_ELF_NAME ${KERNEL_ELF_NAME})
