@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
-#ifndef MOCK_CUSTOM_NRF_MODEM_AT_H_
-#define MOCK_CUSTOM_NRF_MODEM_AT_H_
+#ifndef MOCK_NRF_MODEM_AT_H_
+#define MOCK_NRF_MODEM_AT_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,9 +16,9 @@ extern "C" {
 #endif
 
 /**
- * @file mock_custom_nrf_modem_at.h
+ * @file mock_nrf_modem_at.h
  * @brief Public APIs for the custom nrf_modem_at mock.
- * @defgroup mock_custom_nrf_modem_at Custom mock for nrf_modem_at
+ * @defgroup mock_nrf_modem_at Custom mock for nrf_modem_at
  * @{
  */
 
@@ -27,13 +27,13 @@ extern "C" {
  *
  * This is intended to be used in setUp() function.
  */
-void mock_custom_nrf_modem_at_Init(void);
+void mock_nrf_modem_at_Init(void);
 /**
  * @brief Verify that nrf_modem_at_scanf() calls where executed as expected.
  *
  * This is intended to be used in tearDown() function.
  */
-void mock_custom_nrf_modem_at_Verify(void);
+void mock_nrf_modem_at_Verify(void);
 
 /**
  * @brief Mock for nrf_modem_at_scanf().
@@ -87,4 +87,4 @@ void __mock_nrf_modem_at_scanf_ReturnVarg_string(char *value);
 }
 #endif
 
-#endif /* MOCK_CUSTOM_NRF_MODEM_AT_H_ */
+#endif /* MOCK_NRF_MODEM_AT_H_ */

@@ -11,7 +11,7 @@
 #include <modem/at_monitor.h>
 #include <modem/location.h>
 #include <modem/lte_lc.h>
-#include <mock_custom_nrf_modem_at.h>
+#include <mock_nrf_modem_at.h>
 #include <cmock_nrf_modem_at.h>
 #include <cmock_nrf_modem_gnss.h>
 #include <cmock_modem_key_mgmt.h>
@@ -111,7 +111,7 @@ void setUp(void)
 	k_sem_reset(&event_handler_called_sem);
 
 	cmock_nrf_modem_at_Init();
-	mock_custom_nrf_modem_at_Init();
+	mock_nrf_modem_at_Init();
 	cmock_nrf_modem_gnss_Init();
 	cmock_rest_client_Init();
 	cmock_modem_key_mgmt_Init();
@@ -128,7 +128,7 @@ void tearDown(void)
 	TEST_ASSERT_EQUAL(location_callback_called_expected, location_callback_called_occurred);
 
 	cmock_nrf_modem_at_Verify();
-	mock_custom_nrf_modem_at_Verify();
+	mock_nrf_modem_at_Verify();
 	cmock_nrf_modem_gnss_Verify();
 	cmock_rest_client_Verify();
 	cmock_modem_key_mgmt_Verify();

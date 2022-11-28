@@ -61,14 +61,14 @@ static int scanf_mock_count;
 /* Mock information for multiple nrf_modem_at_scanf() calls */
 static struct scanf_mock scanf_mocks[CONFIG_MOCK_NRF_MODEM_AT_SCANF_CALL_COUNT];
 
-void mock_custom_nrf_modem_at_Init(void)
+void mock_nrf_modem_at_Init(void)
 {
 	memset(scanf_mocks, 0, sizeof(scanf_mocks));
 	scanf_mock_index = 0;
 	scanf_mock_count = -1;
 }
 
-void mock_custom_nrf_modem_at_Verify(void)
+void mock_nrf_modem_at_Verify(void)
 {
 	TEST_ASSERT_MESSAGE(scanf_mock_index > scanf_mock_count,
 		"nrf_modem_at_scanf called fewer times than expected");
