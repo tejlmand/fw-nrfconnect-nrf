@@ -9,6 +9,15 @@
 # booted by B0, and set the required properties for that image to be
 # bootable by B0.
 
+set_ifndef(partition_manager_target partition_manager)
+
+if(NCS_SYSBUILD_PARTITION_MANAGER)
+  # Get the main app of the domain that secure boot should handle.
+  set(main_app ${DOMAIN_APP_${SB_CONFIG_SECURE_BOOT_DOMAIN}})
+  ExternalProject_Get_Property(${main_app} BINARY_DIR)
+  import_kconfig(CONFIG_ ${BINARY_DIR}/zephyr/.config)
+endif()
+
 if (CONFIG_NCS_IS_VARIANT_IMAGE)
   # When building the a variant of an image, the configuration of the variant image
   # is identical to the base image, except 'CONFIG_NCS_IS_VARIANT_IMAGE'. This file is
@@ -19,30 +28,32 @@ if (CONFIG_NCS_IS_VARIANT_IMAGE)
     return()
 endif()
 
-if (CONFIG_BOOTLOADER_MCUBOOT)
-  set(image_to_boot mcuboot)
+if(NOT NCS_SYSBUILD_PARTITION_MANAGER)
+  if (CONFIG_BOOTLOADER_MCUBOOT)
+    set(image_to_boot mcuboot)
 
-  add_overlay_config(
-    mcuboot
-    ${CMAKE_CURRENT_SOURCE_DIR}/multi_image_mcuboot.conf
-    )
+    add_overlay_config(
+      mcuboot
+      ${CMAKE_CURRENT_SOURCE_DIR}/multi_image_mcuboot.conf
+      )
 
-else()
+  else()
 
-  if (CONFIG_SPM)
-    set(image_to_boot spm)
+    if (CONFIG_SPM)
+      set(image_to_boot spm)
+    endif()
   endif()
-endif()
 
-if (image_to_boot)
-  # Include a kconfig file which enables CONFIG_FW_INFO in the image
-  # which is booted by B0.
-  add_overlay_config(
-    ${image_to_boot}
-    ${CMAKE_CURRENT_SOURCE_DIR}/fw_info.conf
-    )
-else()
-  assert(CONFIG_FW_INFO "CONFIG_FW_INFO must be set")
+  if (image_to_boot)
+    # Include a kconfig file which enables CONFIG_FW_INFO in the image
+    # which is booted by B0.
+    add_overlay_config(
+      ${image_to_boot}
+      ${CMAKE_CURRENT_SOURCE_DIR}/fw_info.conf
+      )
+  else()
+    assert(CONFIG_FW_INFO "CONFIG_FW_INFO must be set")
+  endif()
 endif()
 
 if (DEFINED CONFIG_SB_MONOTONIC_COUNTER)
@@ -51,14 +62,14 @@ if (DEFINED CONFIG_SB_MONOTONIC_COUNTER)
 endif()
 
 # Build and include hex file containing provisioned data for the bootloader.
-set(NRF_SCRIPTS            ${NRF_DIR}/scripts)
+set(NRF_SCRIPTS            ${ZEPHYR_NRF_MODULE_DIR}/scripts)
 set(NRF_BOOTLOADER_SCRIPTS ${NRF_SCRIPTS}/bootloader)
 set(PROVISION_HEX_NAME     provision.hex)
 set(PROVISION_HEX          ${PROJECT_BINARY_DIR}/${PROVISION_HEX_NAME})
 
 # Skip signing if MCUBoot is to be booted and its not built from source
 if ((CONFIG_SB_VALIDATE_FW_SIGNATURE OR CONFIG_SB_VALIDATE_FW_HASH) AND
-    NOT (CONFIG_BOOTLOADER_MCUBOOT AND NOT CONFIG_MCUBOOT_BUILD_STRATEGY_FROM_SOURCE))
+    ((NOT (CONFIG_BOOTLOADER_MCUBOOT AND NOT CONFIG_MCUBOOT_BUILD_STRATEGY_FROM_SOURCE)) OR NCS_SYSBUILD_PARTITION_MANAGER))
 
   # Input is comma separated string, convert to CMake list type
   string(REPLACE "," ";" PUBLIC_KEY_FILES_LIST "${CONFIG_SB_PUBLIC_KEY_FILES}")
@@ -88,11 +99,12 @@ if ((CONFIG_SB_VALIDATE_FW_SIGNATURE OR CONFIG_SB_VALIDATE_FW_HASH) AND
   set(PROVISION_DEPENDS signature_public_key_file_target)
 endif()
 
-if (CONFIG_SOC_NRF5340_CPUNET)
-  set(s0_arg --s0-addr $<TARGET_PROPERTY:partition_manager,PM_APP_ADDRESS>)
+# Adjustment to be able to load into sysbuild
+if (CONFIG_SOC_NRF5340_CPUNET OR "${domain}" STREQUAL "CPUNET")
+  set(s0_arg --s0-addr $<TARGET_PROPERTY:${partition_manager_target},PM_APP_ADDRESS>)
 else()
-  set(s0_arg --s0-addr $<TARGET_PROPERTY:partition_manager,PM_S0_ADDRESS>)
-  set(s1_arg --s1-addr $<TARGET_PROPERTY:partition_manager,PM_S1_ADDRESS>)
+  set(s0_arg --s0-addr $<TARGET_PROPERTY:${partition_manager_target},PM_S0_ADDRESS>)
+  set(s1_arg --s1-addr $<TARGET_PROPERTY:${partition_manager_target},PM_S1_ADDRESS>)
 endif()
 
 if (CONFIG_SB_DEBUG_NO_VERIFY_HASHES)
@@ -107,7 +119,7 @@ add_custom_command(
   ${NRF_BOOTLOADER_SCRIPTS}/provision.py
   ${s0_arg}
   ${s1_arg}
-  --provision-addr $<TARGET_PROPERTY:partition_manager,PM_PROVISION_ADDRESS>
+  --provision-addr $<TARGET_PROPERTY:${partition_manager_target},PM_PROVISION_ADDRESS>
   ${public_keys_file_arg}
   --output ${PROVISION_HEX}
   ${monotonic_counter_arg}

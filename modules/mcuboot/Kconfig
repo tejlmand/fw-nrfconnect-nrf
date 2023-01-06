@@ -16,7 +16,8 @@ config SIGN_IMAGES
 	default y
 	imply BUILD_OUTPUT_META
 	depends on MCUBOOT_BUILD_STRATEGY_FROM_SOURCE \
-		   || BOOT_SIGNATURE_KEY_FILE != ""
+		   || BOOT_SIGNATURE_KEY_FILE != "" \
+		   || SYSBUILD_CONTROLLED 
 	help
 	  Sign images for MCUBoot as integrated part of the build stages using
 	  the private key.
