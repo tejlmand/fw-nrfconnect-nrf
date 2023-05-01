@@ -14,6 +14,9 @@ menu "Nordic nRF Connect"
 config ROM_START_OFFSET
 	default 0 if PARTITION_MANAGER_ENABLED # && !SYSBUILD_CONTROLLED
 
+config MCUBOOT_EXTRA_IMGTOOL_ARGS
+	default "--pad-header --header-size 0x200"
+
 #
 # Provide a new choice to override the mbedtls_external library completely
 # and not have to provide a "dummy" path for the implementation
