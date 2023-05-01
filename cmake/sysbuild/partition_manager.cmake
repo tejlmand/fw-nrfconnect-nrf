@@ -111,7 +111,11 @@ function(partition_manager)
   # Iterate over every partition, from smallest to largest.
   foreach(part ${PM_ALL_BY_SIZE})
     if(${part} STREQUAL "app")
-      set(part "${DEFAULT_IMAGE}")
+      if(DEFINED PM_DOMAIN)
+        set(part "${DOMAIN_APP_${PM_DOMAIN}}")
+      else()
+        set(part "${DEFAULT_IMAGE}")
+      endif()
     endif()
     string(TOUPPER ${part} PART)
     get_property(${part}_PM_HEX_FILE GLOBAL PROPERTY ${part}_PM_HEX_FILE)
@@ -124,17 +128,17 @@ function(partition_manager)
     endif()
 
     # Include the partition in the merge operation if it has a hex file.
-#    if(DEFINED ${part}_PM_HEX_FILE)
     if(${part} IN_LIST IMAGES)
       # Question, what is it we want to know ?
       # We are now in sysbuild, meaning we know everything.
       # So for each domain we should just include the generated hex file.
       # Those are available thorugh sysbuild_get, but not locally as there is no parent image.
-#      get_property(${part}_PM_TARGET GLOBAL PROPERTY ${part}_PM_TARGET)
-      sysbuild_get(${part}_image_dir IMAGE ${part} VAR APPLICATION_BINARY_DIR CACHE)
-      sysbuild_get(${part}_kernel_name IMAGE ${part} VAR CONFIG_KERNEL_BIN_NAME KCONFIG)
-
-      list(APPEND explicitly_assigned ${${part}_image_dir}/zephyr/${${part}_kernel_name}.hex)
+      list(APPEND explicitly_assigned ${part})
+      sysbuild_get(${part}_PM_HEX_FILE IMAGE ${part} VAR BYPRODUCT_KERNEL_SIGNED_HEX_NAME CACHE)
+      if(NOT ${part}_PM_HEX_FILE)
+        sysbuild_get(${part}_PM_HEX_FILE IMAGE ${part} VAR BYPRODUCT_KERNEL_HEX_NAME CACHE)
+      endif()
+      set(${part}_PM_TARGET ${part})
     else()
       if(${part} IN_LIST images)
         get_shared(${part}_bin_dir  IMAGE ${part} PROPERTY ZEPHYR_BINARY_DIR)
@@ -144,8 +148,8 @@ function(partition_manager)
         set(${part}_PM_ELF_FILE ${${part}_bin_dir}/${${part}_elf_file})
         set(${part}_PM_TARGET ${part}_subimage)
       elseif(${part} IN_LIST containers)
-        set(${part}_PM_HEX_FILE ${PROJECT_BINARY_DIR}/${part}.hex)
-        set(${part}_PM_TARGET ${part}_hex)
+        set_ifndef(${part}_PM_HEX_FILE ${PROJECT_BINARY_DIR}/${part}.hex)
+        set_ifndef(${part}_PM_TARGET ${part}_hex)
       endif()
       list(APPEND implicitly_assigned ${part})
     endif()
@@ -216,6 +220,10 @@ function(partition_manager)
     if (DEFINED PM_DOMAIN)
       update_runner(IMAGE ${DOMAIN_APP_${PM_DOMAIN}} HEX ${PROJECT_BINARY_DIR}/${container}.hex)
     endif()
+
+    if ("${container}" STREQUAL "merged")
+      update_runner(IMAGE ${DEFAULT_IMAGE} HEX ${PROJECT_BINARY_DIR}/${container}.hex)
+    endif()
   endforeach()
 
 endfunction()
@@ -249,6 +257,11 @@ function(update_runner)
   endforeach()
   file(WRITE ${runners_file} ${runners_content_update})
 endfunction()
+
+
+# APP is a special domain which is handled differently.
+# Remove it from the list.
+list(REMOVE_ITEM PM_DOMAINS APP)
 
 set(user_def_pm_static ${PM_STATIC_YML_FILE})
 
@@ -414,17 +427,13 @@ foreach (d ${PM_DOMAINS})
   list(APPEND ${d}_header_files ${PROJECT_BINARY_DIR}/${generated_path}/pm_config.h)
 endforeach()
 
-# ToDo images can probably be remove now.
-#list(APPEND images ${dynamic_partition})
-
 # Add subsys defined pm.yml to the input_files
 list(APPEND input_files ${PM_SUBSYS_PREPROCESSED})
 
-set(DOMAIN_APP_MAIN ${app_name})
-foreach(d MAIN ${PM_DOMAINS})
+foreach(d APP ${PM_DOMAINS})
   # CPUNET
   set(image_name ${DOMAIN_APP_${d}})
-  if(${d} STREQUAL "MAIN")
+  if(${d} STREQUAL "APP")
     set(d)
   endif()
   sysbuild_get(${image_name}_CONFIG_PM_SRAM_SIZE IMAGE ${image_name} VAR CONFIG_PM_SRAM_SIZE KCONFIG)
