@@ -103,6 +103,7 @@ add_custom_command(
   ${mcuboot_counters_slots}
   DEPENDS
   ${PROVISION_KEY_DEPENDS}
+  ${PUBLIC_KEY_FILES}
   WORKING_DIRECTORY
   ${PROJECT_BINARY_DIR}
   COMMENT
