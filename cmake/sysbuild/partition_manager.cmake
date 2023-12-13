@@ -427,6 +427,14 @@ foreach (image ${IMAGES})
     endif()
   endforeach()
 
+  # Zephyr defined images may use ADJUST_LMA as post-process step.
+  # Such images cannot be handled by partition manager, and therefore excluded
+  # from partition manager processing.
+  sysbuild_get(lma_adjustment IMAGE "${image}" VAR CONFIG_BUILD_OUTPUT_ADJUST_LMA KCONFIG)
+  if(NOT "${lma_adjustment}" STREQUAL "")
+    break()
+  endif()
+
   if(NOT "${DEFAULT_IMAGE}" STREQUAL "${image}" AND NOT "s1_image" STREQUAL "${image}")
     sysbuild_get(${image}_input_files IMAGE ${image} VAR PM_YML_FILES CACHE)
     sysbuild_get(${image}_binary_dir  IMAGE ${image} VAR ZEPHYR_BINARY_DIR CACHE)
