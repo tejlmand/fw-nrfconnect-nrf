@@ -1,10 +1,6 @@
 # Copyright (c) 2024 Nordic Semiconductor
 # SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
 
-CONFIG_SOC_SERIES_NRF91X=y
-CONFIG_SOC_NRF9151_LACA=y
-CONFIG_BOARD_THINGY91X_NRF9151=y
-
 # Enable MPU
 CONFIG_ARM_MPU=y
 
