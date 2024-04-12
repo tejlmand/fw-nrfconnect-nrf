@@ -1,0 +1,16 @@
+board:
+  name: nrf7002dk
+  vendor: nordic
+  socs:
+    - name: nrf5340
+      variants:
+        - name: ns
+          cpucluster: cpuapp
+          # nRF7002 companion IC in nRF7001 emulation mode on nRF7002dk
+          variants:
+          - name: nrf7001
+        - name: nrf7001
+          cpucluster: cpuapp
+        - name: nrf7001
+          cpucluster: cpunet
+
