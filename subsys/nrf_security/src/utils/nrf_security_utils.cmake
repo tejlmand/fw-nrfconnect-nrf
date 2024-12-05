@@ -27,6 +27,8 @@ if(BUILD_INSIDE_TFM)
       platform_s
       tfm_sp_log
       tfm_psa_rot_partition_crypto
+    PRIVATE
+      zephyr_interface
   )
 else()
   # This special linking is done to give access to the zephyr kernel library
@@ -36,6 +38,7 @@ else()
   target_link_libraries(nrf_security_utils
     PRIVATE
       ${Zephyr-Kernel_BINARY_DIR}/zephyr/kernel/libkernel.a
+#      zephyr_interface
   )
 endif()
 

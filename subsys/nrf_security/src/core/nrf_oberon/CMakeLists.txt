@@ -45,6 +45,7 @@ target_link_libraries(oberon_psa_core
     psa_crypto_library_config
     mbedcrypto_base
     nrf_security_utils
+    zephyr_interface
 )
 
 nrf_security_add_zephyr_options_library(oberon_psa_core)

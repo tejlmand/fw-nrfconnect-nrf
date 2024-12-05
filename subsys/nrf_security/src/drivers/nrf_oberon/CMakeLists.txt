@@ -69,6 +69,7 @@ target_link_libraries(oberon_psa_driver
   PRIVATE
     mbedcrypto_oberon_mbedtls_imported
     mbedcrypto_oberon_imported
+    zephyr_interface
 )
 
 # Link oberon_psa_core with this driver

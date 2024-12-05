@@ -96,6 +96,8 @@ target_link_libraries(${mbedcrypto_target}
   INTERFACE
     psa_crypto_config_chosen
     psa_interface
+  PRIVATE
+    zephyr_interface
 )
 
 if(CONFIG_PSA_SSF_CRYPTO_CLIENT)
@@ -144,6 +146,7 @@ target_link_libraries(mbedcrypto_base
     psa_crypto_config_chosen
     $<TARGET_NAME_IF_EXISTS:platform_s>
     nrf_security_utils
+#    zephyr_interface
   PUBLIC
     psa_interface
 )
@@ -242,6 +245,7 @@ if (CONFIG_MBEDTLS_X509_LIBRARY)
       psa_crypto_config_chosen
       ${mbedcrypto_target}
       mbedcrypto_base
+      zephyr_interface
   )
 
   nrf_security_add_zephyr_options(mbedx509)
@@ -285,6 +289,7 @@ if (CONFIG_MBEDTLS_TLS_LIBRARY)
       mbedx509
       ${mbedcrypto_target}
       mbedcrypto_base
+      zephyr_interface
   )
 
   nrf_security_add_zephyr_options(mbedtls)
