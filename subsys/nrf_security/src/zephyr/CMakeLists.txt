@@ -90,4 +90,4 @@ endif()
 # Link with mbedcrypto library (in NS build or by default)
 target_link_libraries(mbedtls_external INTERFACE ${mbedcrypto_target})
 
-zephyr_link_libraries(mbedtls_external)
+target_link_libraries(zephyr PRIVATE mbedtls_external)
