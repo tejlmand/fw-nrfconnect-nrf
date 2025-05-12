@@ -50,7 +50,7 @@ if(BUILD_INSIDE_TFM)
       platform_s
       tfm_sp_log
   )
-elseif(NOT CONFIG_OPENTHREAD)
+else()
   # Ensure zephyr/offsets.h is generated as this is a dependency for CRACEN driver
   # But not when building OpenThread because this casues a cyclic dependency
   add_dependencies(cracen_psa_driver zephyr_generated_headers)
