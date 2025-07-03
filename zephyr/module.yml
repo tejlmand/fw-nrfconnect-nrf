@@ -1,6 +1,6 @@
 build:
   cmake: .
-  kconfig: Kconfig.nrf
+  kconfig-ext: True
   sysbuild-cmake: sysbuild
   sysbuild-kconfig: sysbuild/Kconfig.sysbuild
   settings:
