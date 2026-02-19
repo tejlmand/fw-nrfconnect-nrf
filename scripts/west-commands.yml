@@ -44,3 +44,8 @@ west-commands:
       - name: ncs-ironside-se-update
         class: NcsIronSideSEUpdate
         help: IronSide SE update utility
+  - file: scripts/west_commands/ln.py
+    commands:
+      - name: ln
+        class: Ln
+        help: west link handling
